@@ -1,0 +1,20 @@
+{
+  "name": "tamabot",
+  "version": "1.0.0",
+  "description": "a discord bot",
+  "main": "index.js",
+  "scripts": {
+    "start": "node built/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/dotenv": "^8.2.0",
+    "@types/node": "^12.12.14",
+    "discord.js": "^11.5.1",
+    "dotenv": "^6.2.0",
+    "firebase-admin": "^8.8.0",
+    "moment-timezone": "^0.5.31"
+  }
+}
