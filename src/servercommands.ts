@@ -1,6 +1,6 @@
 import * as discord from 'discord.js';
 import * as utils from './utils';
-import { State, getData, getConfig, getUser, saveConfig, Birthday } from './data';
+import { State, getData, getConfig, getUser, saveConfig, Birthday, RoleState } from './data';
 import { numberToMonth } from './dmcommands'; 
 import * as moment from 'moment-timezone';
 import { self } from '.';
@@ -25,7 +25,13 @@ export function help(message: discord.Message): void {
 export async function birthday(message: discord.Message): Promise<void> {
     const data = getData();
 
-    if ((data[message.author.id]?.state ?? State.None) !== State.None) {
+    const userState = data[message.author.id]?.state ?? State.None;
+    if (userState === State.Done) {
+        utils.send(message, "You've already configured your birthday!");
+        return;
+    }
+
+    if (userState !== State.None) {
         utils.send(message, "Please finish the configuration process in your DMs first!");
         return;
     }
@@ -37,7 +43,7 @@ export async function birthday(message: discord.Message): Promise<void> {
         "\n" +
         "Please answer in a format like `30/1` or `July 20`."
     );
-    data[message.author.id] = { state: State.AwaitingDate };
+    data[message.author.id] = { state: State.AwaitingDate, roleState: RoleState.None };
 }
 
 export function nextbirthday(message: discord.Message): void {
@@ -48,7 +54,7 @@ export function nextbirthday(message: discord.Message): void {
     let closestUserId: string, closestUtc = Infinity, pad = utils.pad;
     for (const user in data) {
         const bday = data[user];
-        if (bday.state === State.None) { // bday is fully configured
+        if (bday.state === State.Done) { // bday is fully configured
             let bdayUtc: number;
             if (bday.utcStart >= nowUtc) { // will happen this year
                 bdayUtc = bday.utcStart;
@@ -99,10 +105,10 @@ export function message(message: discord.Message): void {
 
     if (config.announcement !== undefined) { // set
         saveConfig();
-        if (response.length + expanded.length > 1995) { // too large to preview
+        if (response.length + expanded.length > 1800) { // too large to preview
             response += "You've successfully set a birthday message but it's too large to preview!";
         } else { // preview
-            response += "Birthday messages will look like this:\n" +
+            response += "Birthday messages will look like this (remember I'll post a random image alongside the message too):\n" +
                         "\n" +
                         expanded;
         }
@@ -161,22 +167,40 @@ export function roles(message: discord.Message): void {
 
     const config = getConfig();
     const roles = getBirthdayRoles(message.guild);
-    if (roles.length > 0) config.roleIds = roles;
+    const titleRoles = getBirthdayTitleRoles(message.guild);
+    const titleRolesLength = getBirthdayTitleRolesLength(titleRoles);
+
+    const success = roles.length > 0 && titleRolesLength === 3;
+    if (success) {
+        config.roleIds = roles;
+        config.titleRoleIds = titleRoles;
+    }
 
     const missing = enumerateMissing();
 
     let response = (missing ? `• You still haven't set ${missing}.\n` : "") +
                     "\n" +
-                    "I'm searching for roles named **Birthday Role** in this server.\n";
+                    "I'm searching for some roles in this server.\n" +
+                    "I need 3 roles with the names **Birthday Boy**, **Birthday Girl** and **Birthday Cutie**.\n" +
+                    "I'm also looking for a few roles with the name **Birthday Role** - users will be able to edit those.\n" +
+                    "\n";
+    
+    if (titleRolesLength !== 3) {
+        response += `I couldn't find ${enumerateMissingTitleRoles(titleRoles)}.\n`;
+    }
 
-    if (roles.length === 0) { // not set
-        response += "However, I didn't find any.\n" +
-                    "\n" +
-                    "To set birthday roles, be sure to create at least one role named **Birthday Role** and then type:\n" +
-                    `${utils.usage("roles")}`;
-    } else { // set
+    if (roles.length === 0) {
+        response += "I didn't find any role named **Birthday Role**.\n";
+    }
+
+    if (success) { // set
         saveConfig();
-        response += `I found ${roles.length} ${roles.length === 1 ? "role" : "roles"} which I'll automatically manage.`;
+        response += "I've spotted all the special roles I need! ";
+        response += `I also found ${roles.length} birthday ${roles.length === 1 ? "role" : "roles"} which I'll automatically manage.`;
+    } else { // not set
+        response += "\n" +
+                    "To set birthday roles, be sure to create all the special roles I mentioned and then type:\n" +
+                    `${utils.usage("roles")}`;
     }
 
     utils.send(message, response);
@@ -229,7 +253,7 @@ export async function rolename(message: discord.Message): Promise<void> {
 
     const role = getBirthdayRole(message);
     if (!role) {
-        utils.send(message, "Something went wrong - I don't recognise any of the roles you have.");
+        utils.send(message, "You don't seem to have a birthday role you can edit.");
         return;
     }
 
@@ -300,6 +324,19 @@ export async function rolecolor(message: discord.Message): Promise<void> {
     }
 }
 
+function enumerateMissingTitleRoles(roles: string[]): string {
+    const missing: string[] = [];
+    if (!roles[0]) missing.push("**Birthday Boy**");
+    if (!roles[1]) missing.push("**Birthday Girl**");
+    if (!roles[2]) missing.push("**Birthday Cutie**");
+
+    switch (missing.length) {
+        case 1: return `the role ${missing[0]}`;
+        case 2: return `the roles ${missing[0]} and ${missing[1]}`;
+        case 3: return `the roles ${missing[0]}, ${missing[1]} and ${missing[2]}`;
+    }
+}
+
 function enumerateMissing(): string {
     const config = getConfig();
 
@@ -355,6 +392,31 @@ function getBirthdayRoles(guild: discord.Guild): string[] {
     }
 
     return roles;
+}
+
+function getBirthdayTitleRolesLength(roles: string[]): number {
+    return roles.reduce((prev, cur) => cur ? prev + 1 : prev, 0);
+}
+
+function getBirthdayTitleRoles(guild: discord.Guild): string[] {
+    const roles: string[] = [];
+
+    for (const [name, role] of guild.roles) {
+        const rolename = role.name.toLowerCase();
+        switch (rolename) {
+            case "birthday boy":
+                roles[0] = role.id;
+                break;
+            case "birthday girl":
+                roles[1] = role.id;
+                break;
+            case "birthday cutie":
+                roles[2] = role.id;
+                break;
+        }
+    }
+
+    return roles;  
 }
 
 function getBirthdayRole(message: discord.Message): discord.Role {

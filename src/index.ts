@@ -9,7 +9,7 @@ const botId = process.env.BOT_ID;
 const prefix = process.env.COMMAND;
 
 let isReady = false;
-
+data.gatherImages();
 bot.login(process.env.BOT_TOKEN);
 
 bot.on("ready", async () => {

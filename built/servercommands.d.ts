@@ -1,0 +1,11 @@
+import * as discord from 'discord.js';
+export declare function help(message: discord.Message): void;
+export declare function birthday(message: discord.Message): Promise<void>;
+export declare function nextbirthday(message: discord.Message): void;
+export declare function message(message: discord.Message): void;
+export declare function channel(message: discord.Message): void;
+export declare function roles(message: discord.Message): void;
+export declare function enable(message: discord.Message): void;
+export declare function disable(message: discord.Message): void;
+export declare function rolename(message: discord.Message): Promise<void>;
+export declare function rolecolor(message: discord.Message): Promise<void>;

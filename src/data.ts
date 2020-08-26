@@ -1,21 +1,26 @@
 import * as db from './firebase-module';
 import * as discord from "discord.js";
 import * as moment from 'moment-timezone';
+import * as utils from './utils';
+import * as fs from 'fs';
 
 export type Birthday = {
     day?: number, // bday day (bot's local time)
     month?: number, // bday month (bot's local time)
     tz?: string, // user's timezone
-    utcStart?: number, // unix time of bday start (ms)
-    utcEnd?: number, // unix time of bday end (ms)
+    utcStart?: number, // unix time of bday start (ms) - add editable&title roles
+    utcEnd?: number, // unix time of bday end (ms) - remove title role
+    utcFinalize?: number, // remove editable role
     gender?: Gender, // dictates role choice
     announced?: boolean, // whether bday was announced this year
-    state?: State // dictates bday command progression
+    state: State, // dictates bday command progression
+    roleState: RoleState // dictates role removal progression
 }
 
 export type Configurations = {
     enabled?: boolean, // whether bot should announce at all
-    roleIds?: string[], // bday roles to use
+    roleIds?: string[], // editable bday roles to use
+    titleRoleIds?: string[], // static bday roles - birthday boy/girl/cutie
     announcement?: string, // bday message
     announcementChannelId?: string, // bday message channel
     lastCalculatedUtcYear?: number, // last year bday utcs were calculated for
@@ -28,11 +33,16 @@ export enum Gender {
 }
 
 export enum State {
-    None, AwaitingDate, ConfirmingDate, AwaitingTime, ConfirmingTime, AwaitingGender, ConfirmingGender
+    None, AwaitingDate, ConfirmingDate, AwaitingTime, ConfirmingTime, AwaitingGender, ConfirmingGender, Done
+}
+
+export enum RoleState {
+    None, Given, TitleRemaining
 }
 
 let config: Configurations = {};
 let data: { [userId: string]: Birthday } = {};
+let images: string[] = [];
 
 // while i give these timezones some offset values, these may change so i'll recalculate them anyway
 const timezoneOffsets: { [timezone: string]: number } = {
@@ -75,9 +85,17 @@ const timezoneOffsets: { [timezone: string]: number } = {
     "Pacific/Marquesas": -570
 };
 
-function fillTimezones() {
+function fillTimezones(): void {
     for (const tz in timezoneOffsets) {
         timezoneOffsets[tz] = moment().tz(tz).utcOffset();
+    }
+}
+
+export function gatherImages(): void {
+    if (!fs.existsSync("assets/")) return;
+
+    for (const image of fs.readdirSync("assets/")) {
+        if (image !== "Thumbs.db") images.push(`assets/${image}`);
     }
 }
 
@@ -91,8 +109,9 @@ export async function init(): Promise<void> {
  */
 export async function loadImmediate(): Promise<void> {
     fillTimezones();
+    gatherImages();
     config = await db.get("config/") ?? {enabled: true, lastCalculatedUtcYear: moment().year()};
-    data = await db.get("data/") ?? {}; 
+    data = await db.get("data/") ?? {};
 }
 
 /**
@@ -117,6 +136,11 @@ export function getConfig(): Configurations {
 
 export function getData(): { [userId: string]: Birthday } {
     return data;
+}
+
+// returns undefined if no pictures available
+export function getRandomImage(): string {
+    if (images.length > 0) return utils.randomElement(images);
 }
 
 export function getUser(message: discord.Message): Birthday {

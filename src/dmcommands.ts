@@ -72,6 +72,7 @@ export async function timeParser(message: discord.Message): Promise<void> {
     const utc = bdayUtc(user);
     user.utcStart = utc.start;
     user.utcEnd = utc.end;
+    user.utcFinalize = utc.finalize;
     user.announced = utc.end < moment().utc().valueOf();
 
     utils.send(dm,
@@ -85,11 +86,15 @@ export async function timeParser(message: discord.Message): Promise<void> {
 /**
  * Gets the unix time of a birthday for the current year.
  */
-export function bdayUtc(user: Birthday): {start: number, end: number} {
+export function bdayUtc(user: Birthday): {start: number, end: number, finalize: number} {
     const pad = utils.pad;
     const bdayStr = `${moment().year()}-${pad(user.month)}-${pad(user.day)} 00:00`;
     const bdayDate = moment.tz(bdayStr, user.tz.replace(/ /g, "_"));
-    return { start: bdayDate.utc().valueOf(), end: bdayDate.add(1, "day").utc().valueOf() };
+    return { 
+        start: bdayDate.utc().valueOf(), 
+        end: moment(bdayDate).add(1, "day").utc().valueOf(),
+        finalize: moment(bdayDate).add(3, "day").utc().valueOf()
+    };
 }
 
 export async function timeConfirmer(message: discord.Message): Promise<void> {
@@ -157,7 +162,7 @@ export async function genderConfirmer(message: discord.Message): Promise<void> {
         utils.send(dm,
             "You're all set! I'll try to notify everyone when it's your birthday."
         );
-        user.state = State.None;
+        user.state = State.Done;
         saveUser(message.author.id);
     } else {
         utils.send(dm,
@@ -232,8 +237,8 @@ function getClosestTimezone(hour: number, minute: number): string {
     for (const tz in getTimezoneOffsets()) {
         let date = moment.tz(dateStr, tz);
         if (!isSameDay(now, hour, minute)) { // cannot compare the same day
-            if (hour > now.hour()) date = date.subtract(1, "day"); // they are in the previous day
-            else date = date.add(1, "day"); // they are in the next day
+            if (hour > now.hour()) date.subtract(1, "day"); // they are in the previous day
+            else date.add(1, "day"); // they are in the next day
         }
 
         let utc = date.utc().valueOf();

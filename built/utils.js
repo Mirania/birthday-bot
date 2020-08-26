@@ -1,169 +1,165 @@
-import * as discord from 'discord.js';
-import { Birthday, getConfig } from './data';
-import * as moment from 'moment-timezone';
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getFileExtension = exports.randomElement = exports.serverMemberName = exports.pad = exports.log = exports.minutes = exports.areConfigsSet = exports.resolveBirthdayMessage = exports.isHavingBirthday = exports.mentionChannel = exports.mentionUser = exports.isOwner = exports.isAdmin = exports.usage = exports.sendEmbed = exports.send = void 0;
+const discord = require("discord.js");
+const data_1 = require("./data");
+const moment = require("moment-timezone");
 /**
  * Sends a discord message to the channel determined by `context`. Catches and logs the event if it fails.
  */
-export function send(
-    context: discord.Message | discord.TextChannel | discord.DMChannel, 
-    content: string,
-    pictureURL?: string
-): Promise<discord.Message> {
+function send(context, content, pictureURL) {
     const channel = context instanceof discord.Message ? context.channel : context;
-    const picture = pictureURL 
-        ? { files: [{ attachment: pictureURL, name: `image.${getFileExtension(pictureURL)}` }] } 
+    const picture = pictureURL
+        ? { files: [{ attachment: pictureURL, name: `image.${getFileExtension(pictureURL)}` }] }
         : undefined;
-
-    return channel.send(content, picture).catch((reason: string) => {
+    return channel.send(content, picture).catch((reason) => {
         let location = channel instanceof discord.DMChannel ?
             `${channel.recipient}'s DMs` : `#${channel.name}`;
         log(`[!] Error sending message to ${location}. ${reason}`);
         return context;
-    }) as Promise<discord.Message>;
+    });
 }
-
+exports.send = send;
 /**
  * Sends a discord embed to the same channel as `context`. Catches and logs the event if it fails.
  */
-export function sendEmbed(
-    context: discord.Message, 
-    content: discord.RichEmbed, 
-    pictureURL?: string
-): Promise<discord.Message> {
+function sendEmbed(context, content, pictureURL) {
     const embed = pictureURL
         ? { embed: content, files: [{ attachment: pictureURL, name: `image.${getFileExtension(pictureURL)}` }] }
         : { embed: content };
-
-    return context.channel.send(embed).catch((reason: string) => {
+    return context.channel.send(embed).catch((reason) => {
         let location = context.channel instanceof discord.DMChannel ?
             `${context.author.username}'s DMs` : `#${context.channel.name}`;
         log(`[!] Error sending message to ${location}. ${reason}`);
         return context;
-    }
-    ) as Promise<discord.Message>;
+    });
 }
-
+exports.sendEmbed = sendEmbed;
 /**
  * Returns formatted text about command usage.
  */
-export function usage(commandName: string, argSyntax?: string): string {
+function usage(commandName, argSyntax) {
     return `\`\`\`bash\n${process.env.COMMAND}${commandName} ${argSyntax ? argSyntax : ""}\`\`\``;
 }
-
+exports.usage = usage;
 /**
  * Check if message was posted in a guild and by an admin.
  */
-export function isAdmin(message: discord.Message): boolean {
+function isAdmin(message) {
     if (!message.guild || !message.member.hasPermission("ADMINISTRATOR")) {
         send(message, `Only a server administrator can use this command.`);
         return false;
-    } else return true;
+    }
+    else
+        return true;
 }
-
+exports.isAdmin = isAdmin;
 /**
  * Check if message was posted by the bot owner.
  */
-export function isOwner(message: discord.Message): boolean {
+function isOwner(message) {
     if (![process.env.OWNER_ID, process.env.OWNER_ID2].includes(message.author.id)) {
         send(message, `Only the bot owners can use this command.`);
         return false;
-    } else return true;
+    }
+    else
+        return true;
 }
-
+exports.isOwner = isOwner;
 /**
  * Returns a chat mention of a user.
  */
-export function mentionUser(userId: string): string {
+function mentionUser(userId) {
     return `<@${userId}>`;
 }
-
+exports.mentionUser = mentionUser;
 /**
  * Returns a chat mention of a channel.
  */
-export function mentionChannel(channelId: string): string {
+function mentionChannel(channelId) {
     return `<#${channelId}>`;
 }
-
+exports.mentionChannel = mentionChannel;
 /**
  * Checks if a moment in time happens during a birthday.
  */
-export function isHavingBirthday(bday: Birthday, nowUtc: number): boolean {
-    if (bday.utcStart === undefined || bday.utcEnd === undefined) return false;
+function isHavingBirthday(bday, nowUtc) {
+    if (bday.utcStart === undefined || bday.utcEnd === undefined)
+        return false;
     return nowUtc >= bday.utcStart && nowUtc <= bday.utcEnd;
 }
-
+exports.isHavingBirthday = isHavingBirthday;
 /**
  * Transforms `@user@` sequences into user mentions.
  */
-export function resolveBirthdayMessage(userId: string): string {
-    const config = getConfig();
-
+function resolveBirthdayMessage(userId) {
+    const config = data_1.getConfig();
     if (config.announcement !== undefined)
         return config.announcement.replace(/(@user@)/g, mentionUser(userId));
     else
         return "";
 }
-
+exports.resolveBirthdayMessage = resolveBirthdayMessage;
 /**
  * Check if the mandatory configurations are set.
  */
-export function areConfigsSet(): boolean {
-    const config = getConfig();
-
+function areConfigsSet() {
+    const config = data_1.getConfig();
     return config.announcement !== undefined &&
-           config.announcementChannelId !== undefined &&
-           config.roleIds !== undefined;
+        config.announcementChannelId !== undefined &&
+        config.roleIds !== undefined;
 }
-
+exports.areConfigsSet = areConfigsSet;
 /**
  * Returns an amount of minutes in ms.
  */
-export function minutes(amount: number): number {
+function minutes(amount) {
     return amount * 60 * 1000;
 }
-
+exports.minutes = minutes;
 /**
  * Prints a message to the console.
  */
-export function log(text: string): void {
+function log(text) {
     console.log(`[${moment().format("DD-MM-YYYY HH:mm:ss")}] ${text}`);
 }
-
+exports.log = log;
 /**
  * Pads a number for a date.
  */
-export function pad(value: number): string {
+function pad(value) {
     return value < 10 ? `0${value}` : value.toString();
 }
-
+exports.pad = pad;
 /**
  * Returns `user#1234 (nickname)` with appropriate fallbacks in case such information is missing.
  */
-export function serverMemberName(member: discord.GuildMember): string {
-    if (!member) return "someone unknown";
-    if (!member.nickname) return `${member.user.username}#${member.user.discriminator}`;
+function serverMemberName(member) {
+    if (!member)
+        return "someone unknown";
+    if (!member.nickname)
+        return `${member.user.username}#${member.user.discriminator}`;
     return `${member.nickname} (${member.user.username}#${member.user.discriminator})`;
 }
-
+exports.serverMemberName = serverMemberName;
 /**
  * Returns a random integer between min (inclusive) and max (inclusive).
  */
-function randomInt(min: number, max: number): number {
+function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-
 /**
  * Returns a random element from an array.
  */
-export function randomElement<T>(array: T[]): T {
+function randomElement(array) {
     return array[randomInt(0, array.length - 1)];
 }
-
+exports.randomElement = randomElement;
 /**
  * Returns the file extension of a file.
  */
-export function getFileExtension(filePath: string): string {
+function getFileExtension(filePath) {
     const split = filePath.split(".");
     return split[split.length - 1];
 }
+exports.getFileExtension = getFileExtension;
