@@ -21,6 +21,7 @@ function help(message) {
     const embed = new discord.RichEmbed()
         .setAuthor(`~~ You used the ${prefix}help command! ~~`, _1.self().user.avatarURL)
         .setColor("#FF0000")
+        .setFooter("For more info, ask Pool#5926!")
         .setTitle("Here's what I can do:")
         .addField(`${prefix}birthday`, "Configure your birthday so I'll announce it!")
         .addField(`${prefix}rolename`, "Give your birthday role a name of your choosing.")
