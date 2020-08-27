@@ -276,7 +276,7 @@ function parseYesNo(rawText: string): {valid: boolean, answer?: boolean} {
 function ampmTo24Hours(hour: number, isPM: boolean): number {
     if (hour === 0) return undefined;
     if (hour === 12) return isPM ? 12 : 0;
-    return isPM ? hour-12 : hour;
+    return isPM ? hour+12 : hour;
 }
 
 function monthToNumber(month: string): number {
