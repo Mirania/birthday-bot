@@ -101,7 +101,7 @@ function message(message) {
     if (expanded.length > 1995)
         config.announcement = undefined; // revert
     const missing = enumerateMissing();
-    let response = "• You can type `@member@` in the birthday message where you want me to mention the person.\n" +
+    let response = "• You can type `@user@` in the birthday message where you want me to mention the person.\n" +
         (missing ? `• You still haven't set ${missing}.\n` : "") +
         "\n";
     if (config.announcement !== undefined) { // set
@@ -348,7 +348,7 @@ function parseColor(text) {
     let hexcode = text.replace(/#/g, "").trim();
     if (hexcode.length !== 3 && hexcode.length !== 6)
         return { valid: false };
-    for (const char of hexcode) {
+    for (const char of hexcode.toLowerCase()) {
         if (!/[0123456789abcdef]/.test(char))
             return { valid: false };
     }

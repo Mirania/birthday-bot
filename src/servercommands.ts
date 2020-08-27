@@ -99,7 +99,7 @@ export function message(message: discord.Message): void {
     const missing = enumerateMissing();
 
     let response =
-        "• You can type `@member@` in the birthday message where you want me to mention the person.\n" +
+        "• You can type `@user@` in the birthday message where you want me to mention the person.\n" +
         (missing ? `• You still haven't set ${missing}.\n` : "") +
         "\n";
 
@@ -371,7 +371,7 @@ function parseColor(text: string): {valid: boolean, color?: string} {
     let hexcode = text.replace(/#/g, "").trim();
 
     if (hexcode.length !== 3 && hexcode.length !== 6) return { valid: false };
-    for (const char of hexcode) {
+    for (const char of hexcode.toLowerCase()) {
         if (!/[0123456789abcdef]/.test(char))
             return { valid: false };
     }
