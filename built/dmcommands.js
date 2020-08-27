@@ -255,7 +255,7 @@ function ampmTo24Hours(hour, isPM) {
         return undefined;
     if (hour === 12)
         return isPM ? 12 : 0;
-    return isPM ? hour - 12 : hour;
+    return isPM ? hour + 12 : hour;
 }
 function monthToNumber(month) {
     switch (month) {
