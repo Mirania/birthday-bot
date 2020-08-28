@@ -194,6 +194,7 @@ function parseDate(rawText: string): {valid: boolean, day?: number, month?: numb
 
     if (isNaN(day) || isNaN(month)) return { valid: false };
     if (day < 1 || month < 1 || month > 12 || day > daysInMonth(month)) return { valid: false };
+    if (day === 29 && month === 2) day = 28;
     return { valid: true, day, month };
 }
 

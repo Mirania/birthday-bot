@@ -167,3 +167,10 @@ export function getFileExtension(filePath: string): string {
     const split = filePath.split(".");
     return split[split.length - 1];
 }
+
+/**
+ * Checks if it is a leap year.
+ */
+export function isLeapYear(year: number): boolean {
+    return (year % 100 === 0) ? (year % 400 === 0) : (year % 4 === 0);
+}
