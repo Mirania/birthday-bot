@@ -177,6 +177,8 @@ function parseDate(rawText) {
         return { valid: false };
     if (day < 1 || month < 1 || month > 12 || day > daysInMonth(month))
         return { valid: false };
+    if (day === 29 && month === 2)
+        day = 28;
     return { valid: true, day, month };
 }
 // valid formats: 12:34, 5:40 pm

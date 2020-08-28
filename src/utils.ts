@@ -55,20 +55,14 @@ export function usage(commandName: string, argSyntax?: string): string {
  * Check if message was posted in a guild and by an admin.
  */
 export function isAdmin(message: discord.Message): boolean {
-    if (!message.guild || !message.member.hasPermission("ADMINISTRATOR")) {
-        send(message, `Only a server administrator can use this command.`);
-        return false;
-    } else return true;
+    return message.guild && message.member.hasPermission("ADMINISTRATOR");
 }
 
 /**
  * Check if message was posted by the bot owner.
  */
 export function isOwner(message: discord.Message): boolean {
-    if (![process.env.OWNER_ID, process.env.OWNER_ID2].includes(message.author.id)) {
-        send(message, `Only the bot owners can use this command.`);
-        return false;
-    } else return true;
+    return [process.env.OWNER_ID, process.env.OWNER_ID2].includes(message.author.id);
 }
 
 /**

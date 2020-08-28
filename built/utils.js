@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getFileExtension = exports.randomElement = exports.serverMemberName = exports.pad = exports.log = exports.minutes = exports.areConfigsSet = exports.resolveBirthdayMessage = exports.isHavingBirthday = exports.mentionChannel = exports.mentionUser = exports.isOwner = exports.isAdmin = exports.usage = exports.sendEmbed = exports.send = void 0;
+exports.isLeapYear = exports.getFileExtension = exports.randomElement = exports.serverMemberName = exports.pad = exports.log = exports.minutes = exports.areConfigsSet = exports.resolveBirthdayMessage = exports.isHavingBirthday = exports.mentionChannel = exports.mentionUser = exports.isOwner = exports.isAdmin = exports.usage = exports.sendEmbed = exports.send = void 0;
 const discord = require("discord.js");
 const data_1 = require("./data");
 const moment = require("moment-timezone");
@@ -46,24 +46,14 @@ exports.usage = usage;
  * Check if message was posted in a guild and by an admin.
  */
 function isAdmin(message) {
-    if (!message.guild || !message.member.hasPermission("ADMINISTRATOR")) {
-        send(message, `Only a server administrator can use this command.`);
-        return false;
-    }
-    else
-        return true;
+    return message.guild && message.member.hasPermission("ADMINISTRATOR");
 }
 exports.isAdmin = isAdmin;
 /**
  * Check if message was posted by the bot owner.
  */
 function isOwner(message) {
-    if (![process.env.OWNER_ID, process.env.OWNER_ID2].includes(message.author.id)) {
-        send(message, `Only the bot owners can use this command.`);
-        return false;
-    }
-    else
-        return true;
+    return [process.env.OWNER_ID, process.env.OWNER_ID2].includes(message.author.id);
 }
 exports.isOwner = isOwner;
 /**
@@ -163,3 +153,10 @@ function getFileExtension(filePath) {
     return split[split.length - 1];
 }
 exports.getFileExtension = getFileExtension;
+/**
+ * Checks if it is a leap year.
+ */
+function isLeapYear(year) {
+    return (year % 100 === 0) ? (year % 400 === 0) : (year % 4 === 0);
+}
+exports.isLeapYear = isLeapYear;

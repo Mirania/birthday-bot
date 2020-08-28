@@ -64,3 +64,7 @@ export declare function randomElement<T>(array: T[]): T;
  * Returns the file extension of a file.
  */
 export declare function getFileExtension(filePath: string): string;
+/**
+ * Checks if it is a leap year.
+ */
+export declare function isLeapYear(year: number): boolean;
