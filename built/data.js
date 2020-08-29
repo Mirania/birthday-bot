@@ -35,7 +35,7 @@ var RoleState;
 (function (RoleState) {
     RoleState[RoleState["None"] = 0] = "None";
     RoleState[RoleState["Given"] = 1] = "Given";
-    RoleState[RoleState["TitleRemaining"] = 2] = "TitleRemaining";
+    RoleState[RoleState["EditableRemaining"] = 2] = "EditableRemaining";
 })(RoleState = exports.RoleState || (exports.RoleState = {}));
 let config = {};
 let data = {};

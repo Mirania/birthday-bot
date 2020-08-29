@@ -39,7 +39,7 @@ export declare enum State {
 export declare enum RoleState {
     None = 0,
     Given = 1,
-    TitleRemaining = 2
+    EditableRemaining = 2
 }
 export declare function gatherImages(): void;
 export declare function init(): Promise<void>;

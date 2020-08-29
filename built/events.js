@@ -42,13 +42,13 @@ function announceBirthdays() {
                 }
             }
             else if (bday.roleState === data_1.RoleState.Given && bday.utcEnd < nowUtc) {
-                // remove editable role
-                yield removeEditableRoleFromUser(member);
-                data_1.saveUser(user);
-            }
-            else if (bday.roleState === data_1.RoleState.TitleRemaining && bday.utcFinalize < nowUtc) {
                 // remove title role
                 yield removeTitleRoleFromUser(member);
+                data_1.saveUser(user);
+            }
+            else if (bday.roleState === data_1.RoleState.EditableRemaining && bday.utcFinalize < nowUtc) {
+                // remove editable role
+                yield removeEditableRoleFromUser(member);
                 data_1.saveUser(user);
             }
         }
@@ -115,7 +115,7 @@ function removeEditableRoleFromUser(user) {
             const role = user.roles.find(r => config.roleIds.includes(r.id));
             if (role)
                 yield user.removeRole(role, "Expiration of editable birthday role.");
-            data[user.id].roleState = data_1.RoleState.TitleRemaining;
+            data[user.id].roleState = data_1.RoleState.None;
         }
         catch (e) {
             utils.log(`Silently failed to remove editable role from user: ${e}`);
@@ -131,7 +131,7 @@ function removeTitleRoleFromUser(user) {
             const role = user.roles.find(r => config.titleRoleIds.includes(r.id));
             if (role)
                 yield user.removeRole(role, "Expiration of static birthday role.");
-            data[user.id].roleState = data_1.RoleState.None;
+            data[user.id].roleState = data_1.RoleState.EditableRemaining;
         }
         catch (e) {
             utils.log(`Silently failed to remove title role from user: ${e}`);

@@ -31,12 +31,12 @@ export async function announceBirthdays(): Promise<void> {
                 utils.send(channel, "I was going to announce a birthday but it seems I'm missing role permissions.");
             }
         } else if (bday.roleState === RoleState.Given && bday.utcEnd < nowUtc) { 
-            // remove editable role
-            await removeEditableRoleFromUser(member);
-            saveUser(user);
-        } else if (bday.roleState === RoleState.TitleRemaining && bday.utcFinalize < nowUtc) {
             // remove title role
             await removeTitleRoleFromUser(member);
+            saveUser(user);
+        } else if (bday.roleState === RoleState.EditableRemaining && bday.utcFinalize < nowUtc) {
+            // remove editable role
+            await removeEditableRoleFromUser(member);
             saveUser(user);
         }
     }
@@ -106,7 +106,7 @@ async function removeEditableRoleFromUser(user: discord.GuildMember): Promise<vo
         // find the editable role
         const role = user.roles.find(r => config.roleIds.includes(r.id));
         if (role) await user.removeRole(role, "Expiration of editable birthday role.");
-        data[user.id].roleState = RoleState.TitleRemaining;
+        data[user.id].roleState = RoleState.None;
     } catch (e) {
         utils.log(`Silently failed to remove editable role from user: ${e}`);
     }
@@ -120,7 +120,7 @@ async function removeTitleRoleFromUser(user: discord.GuildMember): Promise<void>
         // find the editable role
         const role = user.roles.find(r => config.titleRoleIds.includes(r.id));
         if (role) await user.removeRole(role, "Expiration of static birthday role.");
-        data[user.id].roleState = RoleState.None;
+        data[user.id].roleState = RoleState.EditableRemaining;
     } catch (e) {
         utils.log(`Silently failed to remove title role from user: ${e}`);
     }

@@ -37,7 +37,7 @@ export enum State {
 }
 
 export enum RoleState {
-    None, Given, TitleRemaining
+    None, Given, EditableRemaining
 }
 
 let config: Configurations = {};
