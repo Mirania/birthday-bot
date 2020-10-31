@@ -27,7 +27,7 @@ function announceBirthdays() {
             if (bday.state !== data_1.State.Done)
                 continue; // configuration incomplete
             const guild = yield _1.self().guilds.fetch(config.serverId);
-            const member = yield guild.members.fetch(user);
+            const member = yield utils.getIfExists(guild.members, user);
             if (!member)
                 continue; // server member not found
             if (bday.announced === false && utils.isHavingBirthday(bday, nowUtc)) {

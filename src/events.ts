@@ -18,7 +18,8 @@ export async function announceBirthdays(): Promise<void> {
         if (bday.state !== State.Done) continue; // configuration incomplete
 
         const guild = await self().guilds.fetch(config.serverId);
-        const member = await guild.members.fetch(user);
+        const member = await utils.getIfExists(guild.members, user);
+
         if (!member) continue; // server member not found
 
         if (bday.announced === false && utils.isHavingBirthday(bday, nowUtc)) {
