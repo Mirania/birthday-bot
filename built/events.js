@@ -21,12 +21,13 @@ function announceBirthdays() {
         const config = data_1.getConfig();
         const data = data_1.getData();
         const nowUtc = moment().utc().valueOf();
-        const channel = _1.self().channels.find(ch => ch.id === config.announcementChannelId);
+        const channel = yield _1.self().channels.fetch(config.announcementChannelId);
         for (const user in data) {
             const bday = data[user];
             if (bday.state !== data_1.State.Done)
                 continue; // configuration incomplete
-            const member = _1.self().guilds.find(g => g.id === config.serverId).member(user);
+            const guild = yield _1.self().guilds.fetch(config.serverId);
+            const member = yield guild.members.fetch(user);
             if (!member)
                 continue; // server member not found
             if (bday.announced === false && utils.isHavingBirthday(bday, nowUtc)) {
@@ -92,10 +93,12 @@ function giveRoleToUser(user) {
         try {
             // this is the static role
             const titleRoleIndex = getGenderedRoleIndex(data[user.id].gender);
-            yield user.addRole(config.titleRoleIds[titleRoleIndex], "Static birthday role.");
+            const titleRole = yield user.guild.roles.fetch(config.titleRoleIds[titleRoleIndex]);
+            yield user.roles.add(titleRole, "Static birthday role.");
             // this is the editable role
-            yield user.addRole(config.roleIds[roleIndex], "Editable birthday role.");
-            user.roles.find(r => r.id === config.roleIds[roleIndex]).setName("Birthday Role", "Resetting the editable birthday role name.");
+            const editableRole = yield user.guild.roles.fetch(config.roleIds[roleIndex]);
+            yield user.roles.add(editableRole, "Editable birthday role.");
+            editableRole.setName("Birthday Role", "Resetting the editable birthday role name.");
             data[user.id].roleState = data_1.RoleState.Given;
             config.lastRoleUsedIndex = (roleIndex + 1) % config.roleIds.length;
             data_1.saveConfig();
@@ -112,9 +115,9 @@ function removeEditableRoleFromUser(user) {
         const data = data_1.getData();
         try {
             // find the editable role
-            const role = user.roles.find(r => config.roleIds.includes(r.id));
-            if (role)
-                yield user.removeRole(role, "Expiration of editable birthday role.");
+            const editableRole = user.roles.cache.find(r => config.roleIds.includes(r.id));
+            if (editableRole)
+                yield user.roles.remove(editableRole, "Expiration of editable birthday role.");
             data[user.id].roleState = data_1.RoleState.None;
         }
         catch (e) {
@@ -127,10 +130,10 @@ function removeTitleRoleFromUser(user) {
         const config = data_1.getConfig();
         const data = data_1.getData();
         try {
-            // find the editable role
-            const role = user.roles.find(r => config.titleRoleIds.includes(r.id));
-            if (role)
-                yield user.removeRole(role, "Expiration of static birthday role.");
+            // find the title role
+            const titleRole = user.roles.cache.find(r => config.titleRoleIds.includes(r.id));
+            if (titleRole)
+                yield user.roles.remove(titleRole, "Expiration of static birthday role.");
             data[user.id].roleState = data_1.RoleState.EditableRemaining;
         }
         catch (e) {

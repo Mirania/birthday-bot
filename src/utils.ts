@@ -28,7 +28,7 @@ export function send(
  */
 export function sendEmbed(
     context: discord.Message, 
-    content: discord.RichEmbed, 
+    content: discord.MessageEmbed, 
     pictureURL?: string
 ): Promise<discord.Message> {
     const embed = pictureURL
@@ -42,6 +42,27 @@ export function sendEmbed(
         return context;
     }
     ) as Promise<discord.Message>;
+}
+
+/**
+ * Finds a guild by id, returning `undefined` if none could be found.
+ */
+export async function getIfExists(manager: discord.GuildManager, id: string): Promise<discord.Guild>;
+/**
+ * Finds a guild member by id, returning `undefined` if none could be found.
+ */
+export async function getIfExists(manager: discord.GuildMemberManager, id: string): Promise<discord.GuildMember>;
+/**
+ * Finds a channel by id, returning `undefined` if none could be found.
+ */
+export async function getIfExists(manager: discord.ChannelManager, id: string): Promise<discord.Channel>;
+/**
+ * New discord API is awful.
+ */
+export async function getIfExists(manager: any, id: string): Promise<any> {
+    try {
+        return await manager.fetch(id);
+    } catch (e) { } // ignore and return undefined
 }
 
 /**

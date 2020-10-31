@@ -16,14 +16,17 @@ const discord = require("discord.js");
 const handler = require("./handler");
 const data = require("./data");
 const utils = require("./utils");
-const bot = new discord.Client();
+const bot = new discord.Client({
+    partials: ["REACTION", "MESSAGE"],
+    ws: { intents: ["GUILDS", "GUILD_MESSAGES"] }
+});
 const botId = process.env.BOT_ID;
 const prefix = process.env.COMMAND;
 let isReady = false;
 data.gatherImages();
 bot.login(process.env.BOT_TOKEN);
 bot.on("ready", () => __awaiter(void 0, void 0, void 0, function* () {
-    bot.user.setPresence({ game: { name: "Birthday Bot - $help" }, status: "dnd" });
+    bot.user.setPresence({ activity: { name: "Birthday Bot - $help" }, status: "dnd" });
     yield data.init();
     handler.handleEvents();
     isReady = true;

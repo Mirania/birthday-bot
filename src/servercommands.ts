@@ -8,8 +8,8 @@ import { self } from '.';
 export function help(message: discord.Message): void {
     const prefix = process.env.COMMAND;
 
-    const embed = new discord.RichEmbed()
-        .setAuthor(`~~ You used the ${prefix}help command! ~~`, self().user.avatarURL)
+    const embed = new discord.MessageEmbed()
+        .setAuthor(`~~ You used the ${prefix}help command! ~~`, self().user.avatarURL())
         .setColor("#FF0000")
         .setFooter("For more info, ask Pool#5926!")
         .setTitle("Here's what I can do:")
@@ -47,7 +47,7 @@ export async function birthday(message: discord.Message): Promise<void> {
     data[message.author.id] = { state: State.AwaitingDate, roleState: RoleState.None };
 }
 
-export function nextbirthday(message: discord.Message): void {
+export async function nextbirthday(message: discord.Message): Promise<void> {
     const config = getConfig();
     const data = getData();
 
@@ -61,7 +61,7 @@ export function nextbirthday(message: discord.Message): void {
                 bdayUtc = bday.utcStart;
             } else { // will happen next year
                 const dateStr = `${moment().year()+1}-${pad(bday.month)}-${pad(bday.day)} 00:00`;
-                bdayUtc = moment.tz(dateStr, bday.tz).utc().valueOf();
+                bdayUtc = moment.tz(dateStr, bday.tz.replace(/ /g, "_")).utc().valueOf();
             }
 
             const diff = bdayUtc - nowUtc;
@@ -76,7 +76,8 @@ export function nextbirthday(message: discord.Message): void {
         utils.send(message, "I have no upcoming birthdays configured.");
         return;
     } else {
-        const member = self().guilds.find(g => g.id === config.serverId).member(closestUserId);
+        const guild = await self().guilds.fetch(config.serverId);
+        const member = await guild.members.fetch(closestUserId);
         const bday = data[closestUserId];
         let response = `The next birthday is that of ${utils.serverMemberName(member)}. ` +
             `It will happen on ${numberToMonth(bday.month)} ${bday.day}, in the ${bday.tz} timezone.`;
@@ -125,7 +126,7 @@ export function message(message: discord.Message): void {
     utils.send(message, response);
 }
 
-export function channel(message: discord.Message): void {
+export async function channel(message: discord.Message): Promise<void> {
     if (!utils.isAdmin(message) && !utils.isOwner(message)) {
         utils.send(message, "You must be an administrator to use this command!");
         return;
@@ -134,7 +135,7 @@ export function channel(message: discord.Message): void {
     const config = getConfig();
 
     let text = message.content.replace(/(\$channel |\$channel)/, "").trim();
-    const parsed = parseChannel(text, message.guild);
+    const parsed = await parseChannel(text, message.guild);
     if (parsed.valid) {
         config.announcementChannelId = parsed.id;
         config.serverId = message.guild.id;
@@ -357,15 +358,15 @@ function enumerateMissing(): string {
     }
 }
 
-function parseChannel(text: string, guild: discord.Guild): {valid: boolean, id?: string} {
+async function parseChannel(text: string, guild: discord.Guild): Promise<{valid: boolean, id?: string}> {
     const channelId = text.replace(/[<#>]/g, "");
 
-    for (const [name, channel] of guild.channels) {
-        if (channel.id === channelId && channel instanceof discord.TextChannel)
-            return { valid: true, id: channel.id };
-    }
+    const channel = await utils.getIfExists(self().channels, channelId);
 
-    return { valid: false };
+    if (channel && channel instanceof discord.TextChannel)
+        return { valid: true, id: channel.id };
+    else
+        return { valid: false };
 }
 
 function parseColor(text: string): {valid: boolean, color?: string} {
@@ -387,7 +388,7 @@ function parseColor(text: string): {valid: boolean, color?: string} {
 function getBirthdayRoles(guild: discord.Guild): string[] {
     const roles: string[] = [];
 
-    for (const [name, role] of guild.roles) {
+    for (const [name, role] of guild.roles.cache) {
         if (role.name.toLowerCase() === "birthday role")
             roles.push(role.id);
     }
@@ -402,7 +403,7 @@ function getBirthdayTitleRolesLength(roles: string[]): number {
 function getBirthdayTitleRoles(guild: discord.Guild): string[] {
     const roles: string[] = [];
 
-    for (const [name, role] of guild.roles) {
+    for (const [name, role] of guild.roles.cache) {
         const rolename = role.name.toLowerCase();
         switch (rolename) {
             case "birthday boy":
@@ -425,7 +426,7 @@ function getBirthdayRole(message: discord.Message): discord.Role {
 
     if (!config.roleIds) return undefined;
 
-    const userRoles = message.guild.member(message.author).roles;
+    const userRoles = message.guild.member(message.author).roles.cache;
     for (const [name, role] of userRoles) {
         if (config.roleIds.includes(role.id)) return role;
     }

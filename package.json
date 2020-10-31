@@ -11,10 +11,10 @@
   "license": "ISC",
   "dependencies": {
     "@types/dotenv": "^8.2.0",
-    "@types/node": "^12.12.14",
-    "discord.js": "^11.5.1",
+    "@types/node": "^12.19.3",
+    "discord.js": "^12.4.1",
     "dotenv": "^6.2.0",
-    "firebase-admin": "^8.8.0",
+    "firebase-admin": "^8.13.0",
     "moment-timezone": "^0.5.31"
   }
 }

@@ -1,6 +1,15 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isLeapYear = exports.getFileExtension = exports.randomElement = exports.serverMemberName = exports.pad = exports.log = exports.minutes = exports.areConfigsSet = exports.resolveBirthdayMessage = exports.isHavingBirthday = exports.mentionChannel = exports.mentionUser = exports.isOwner = exports.isAdmin = exports.usage = exports.sendEmbed = exports.send = void 0;
+exports.isLeapYear = exports.getFileExtension = exports.randomElement = exports.serverMemberName = exports.pad = exports.log = exports.minutes = exports.areConfigsSet = exports.resolveBirthdayMessage = exports.isHavingBirthday = exports.mentionChannel = exports.mentionUser = exports.isOwner = exports.isAdmin = exports.usage = exports.getIfExists = exports.sendEmbed = exports.send = void 0;
 const discord = require("discord.js");
 const data_1 = require("./data");
 const moment = require("moment-timezone");
@@ -35,6 +44,18 @@ function sendEmbed(context, content, pictureURL) {
     });
 }
 exports.sendEmbed = sendEmbed;
+/**
+ * New discord API is awful.
+ */
+function getIfExists(manager, id) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            return yield manager.fetch(id);
+        }
+        catch (e) { } // ignore and return undefined
+    });
+}
+exports.getIfExists = getIfExists;
 /**
  * Returns formatted text about command usage.
  */

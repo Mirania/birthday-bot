@@ -18,8 +18,8 @@ const moment = require("moment-timezone");
 const _1 = require(".");
 function help(message) {
     const prefix = process.env.COMMAND;
-    const embed = new discord.RichEmbed()
-        .setAuthor(`~~ You used the ${prefix}help command! ~~`, _1.self().user.avatarURL)
+    const embed = new discord.MessageEmbed()
+        .setAuthor(`~~ You used the ${prefix}help command! ~~`, _1.self().user.avatarURL())
         .setColor("#FF0000")
         .setFooter("For more info, ask Pool#5926!")
         .setTitle("Here's what I can do:")
@@ -54,39 +54,42 @@ function birthday(message) {
 }
 exports.birthday = birthday;
 function nextbirthday(message) {
-    const config = data_1.getConfig();
-    const data = data_1.getData();
-    const nowUtc = moment().utc().valueOf();
-    let closestUserId, closestUtc = Infinity, pad = utils.pad;
-    for (const user in data) {
-        const bday = data[user];
-        if (bday.state === data_1.State.Done) { // bday is fully configured
-            let bdayUtc;
-            if (bday.utcStart >= nowUtc) { // will happen this year
-                bdayUtc = bday.utcStart;
-            }
-            else { // will happen next year
-                const dateStr = `${moment().year() + 1}-${pad(bday.month)}-${pad(bday.day)} 00:00`;
-                bdayUtc = moment.tz(dateStr, bday.tz).utc().valueOf();
-            }
-            const diff = bdayUtc - nowUtc;
-            if (diff < closestUtc) {
-                closestUtc = diff;
-                closestUserId = user;
+    return __awaiter(this, void 0, void 0, function* () {
+        const config = data_1.getConfig();
+        const data = data_1.getData();
+        const nowUtc = moment().utc().valueOf();
+        let closestUserId, closestUtc = Infinity, pad = utils.pad;
+        for (const user in data) {
+            const bday = data[user];
+            if (bday.state === data_1.State.Done) { // bday is fully configured
+                let bdayUtc;
+                if (bday.utcStart >= nowUtc) { // will happen this year
+                    bdayUtc = bday.utcStart;
+                }
+                else { // will happen next year
+                    const dateStr = `${moment().year() + 1}-${pad(bday.month)}-${pad(bday.day)} 00:00`;
+                    bdayUtc = moment.tz(dateStr, bday.tz.replace(/ /g, "_")).utc().valueOf();
+                }
+                const diff = bdayUtc - nowUtc;
+                if (diff < closestUtc) {
+                    closestUtc = diff;
+                    closestUserId = user;
+                }
             }
         }
-    }
-    if (closestUtc === Infinity) {
-        utils.send(message, "I have no upcoming birthdays configured.");
-        return;
-    }
-    else {
-        const member = _1.self().guilds.find(g => g.id === config.serverId).member(closestUserId);
-        const bday = data[closestUserId];
-        let response = `The next birthday is that of ${utils.serverMemberName(member)}. ` +
-            `It will happen on ${dmcommands_1.numberToMonth(bday.month)} ${bday.day}, in the ${bday.tz} timezone.`;
-        utils.send(message, response);
-    }
+        if (closestUtc === Infinity) {
+            utils.send(message, "I have no upcoming birthdays configured.");
+            return;
+        }
+        else {
+            const guild = yield _1.self().guilds.fetch(config.serverId);
+            const member = yield guild.members.fetch(closestUserId);
+            const bday = data[closestUserId];
+            let response = `The next birthday is that of ${utils.serverMemberName(member)}. ` +
+                `It will happen on ${dmcommands_1.numberToMonth(bday.month)} ${bday.day}, in the ${bday.tz} timezone.`;
+            utils.send(message, response);
+        }
+    });
 }
 exports.nextbirthday = nextbirthday;
 function message(message) {
@@ -129,34 +132,36 @@ function message(message) {
 }
 exports.message = message;
 function channel(message) {
-    if (!utils.isAdmin(message) && !utils.isOwner(message)) {
-        utils.send(message, "You must be an administrator to use this command!");
-        return;
-    }
-    const config = data_1.getConfig();
-    let text = message.content.replace(/(\$channel |\$channel)/, "").trim();
-    const parsed = parseChannel(text, message.guild);
-    if (parsed.valid) {
-        config.announcementChannelId = parsed.id;
-        config.serverId = message.guild.id;
-    }
-    const missing = enumerateMissing();
-    let response = (missing ? `• You still haven't set ${missing}.\n` : "") +
-        "\n";
-    if (config.announcementChannelId !== undefined) { // set
-        data_1.saveConfig();
-        response += `Birthday messages will be posted to ${text}.`;
-    }
-    else { // not set
-        if (text === "") { // no input
-            response += `To set a channel for birthday announcements, type:\n` +
-                `${utils.usage("channel", "#the-channel-name")}`;
+    return __awaiter(this, void 0, void 0, function* () {
+        if (!utils.isAdmin(message) && !utils.isOwner(message)) {
+            utils.send(message, "You must be an administrator to use this command!");
+            return;
         }
-        else { // bad input
-            response += "That doesn't seem to be a valid text channel. Please retry.";
+        const config = data_1.getConfig();
+        let text = message.content.replace(/(\$channel |\$channel)/, "").trim();
+        const parsed = yield parseChannel(text, message.guild);
+        if (parsed.valid) {
+            config.announcementChannelId = parsed.id;
+            config.serverId = message.guild.id;
         }
-    }
-    utils.send(message, response);
+        const missing = enumerateMissing();
+        let response = (missing ? `• You still haven't set ${missing}.\n` : "") +
+            "\n";
+        if (config.announcementChannelId !== undefined) { // set
+            data_1.saveConfig();
+            response += `Birthday messages will be posted to ${text}.`;
+        }
+        else { // not set
+            if (text === "") { // no input
+                response += `To set a channel for birthday announcements, type:\n` +
+                    `${utils.usage("channel", "#the-channel-name")}`;
+            }
+            else { // bad input
+                response += "That doesn't seem to be a valid text channel. Please retry.";
+            }
+        }
+        utils.send(message, response);
+    });
 }
 exports.channel = channel;
 function roles(message) {
@@ -338,12 +343,14 @@ function enumerateMissing() {
     }
 }
 function parseChannel(text, guild) {
-    const channelId = text.replace(/[<#>]/g, "");
-    for (const [name, channel] of guild.channels) {
-        if (channel.id === channelId && channel instanceof discord.TextChannel)
+    return __awaiter(this, void 0, void 0, function* () {
+        const channelId = text.replace(/[<#>]/g, "");
+        const channel = yield utils.getIfExists(_1.self().channels, channelId);
+        if (channel && channel instanceof discord.TextChannel)
             return { valid: true, id: channel.id };
-    }
-    return { valid: false };
+        else
+            return { valid: false };
+    });
 }
 function parseColor(text) {
     let hexcode = text.replace(/#/g, "").trim();
@@ -363,7 +370,7 @@ function parseColor(text) {
 }
 function getBirthdayRoles(guild) {
     const roles = [];
-    for (const [name, role] of guild.roles) {
+    for (const [name, role] of guild.roles.cache) {
         if (role.name.toLowerCase() === "birthday role")
             roles.push(role.id);
     }
@@ -374,7 +381,7 @@ function getBirthdayTitleRolesLength(roles) {
 }
 function getBirthdayTitleRoles(guild) {
     const roles = [];
-    for (const [name, role] of guild.roles) {
+    for (const [name, role] of guild.roles.cache) {
         const rolename = role.name.toLowerCase();
         switch (rolename) {
             case "birthday boy":
@@ -394,7 +401,7 @@ function getBirthdayRole(message) {
     const config = data_1.getConfig();
     if (!config.roleIds)
         return undefined;
-    const userRoles = message.guild.member(message.author).roles;
+    const userRoles = message.guild.member(message.author).roles.cache;
     for (const [name, role] of userRoles) {
         if (config.roleIds.includes(role.id))
             return role;

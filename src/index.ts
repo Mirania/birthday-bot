@@ -4,7 +4,10 @@ import * as handler from './handler';
 import * as data from './data';
 import * as utils from './utils';
 
-const bot = new discord.Client();
+const bot = new discord.Client({
+    partials: ["REACTION", "MESSAGE"],
+    ws: { intents: ["GUILDS", "GUILD_MESSAGES"] }
+});
 const botId = process.env.BOT_ID;
 const prefix = process.env.COMMAND;
 
@@ -13,7 +16,7 @@ data.gatherImages();
 bot.login(process.env.BOT_TOKEN);
 
 bot.on("ready", async () => {
-    bot.user.setPresence({ game: { name: "Birthday Bot - $help" }, status: "dnd" });
+    bot.user.setPresence({ activity: { name: "Birthday Bot - $help" }, status: "dnd" });
     await data.init();
     handler.handleEvents();
     isReady = true;

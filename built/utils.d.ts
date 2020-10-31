@@ -7,7 +7,19 @@ export declare function send(context: discord.Message | discord.TextChannel | di
 /**
  * Sends a discord embed to the same channel as `context`. Catches and logs the event if it fails.
  */
-export declare function sendEmbed(context: discord.Message, content: discord.RichEmbed, pictureURL?: string): Promise<discord.Message>;
+export declare function sendEmbed(context: discord.Message, content: discord.MessageEmbed, pictureURL?: string): Promise<discord.Message>;
+/**
+ * Finds a guild by id, returning `undefined` if none could be found.
+ */
+export declare function getIfExists(manager: discord.GuildManager, id: string): Promise<discord.Guild>;
+/**
+ * Finds a guild member by id, returning `undefined` if none could be found.
+ */
+export declare function getIfExists(manager: discord.GuildMemberManager, id: string): Promise<discord.GuildMember>;
+/**
+ * Finds a channel by id, returning `undefined` if none could be found.
+ */
+export declare function getIfExists(manager: discord.ChannelManager, id: string): Promise<discord.Channel>;
 /**
  * Returns formatted text about command usage.
  */
