@@ -7,7 +7,7 @@ export async function dateParser(message: discord.Message): Promise<void> {
     const user = getUser(message);
     const dm = await message.author.createDM();
     const parsed = parseDate(message.content);
-    
+
     if (!parsed.valid) {
         utils.send(dm,
             "Sorry, I didn't quite understand that. Could you please try again?"
@@ -21,7 +21,7 @@ export async function dateParser(message: discord.Message): Promise<void> {
         `Okay, so it's ${numberToMonth(parsed.month)} ${parsed.day}?` +
         "\n" +
         "Please answer yes or no to confirm."
-    );
+    );    
     user.state = State.ConfirmingDate;
 }
 

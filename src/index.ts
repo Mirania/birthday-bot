@@ -5,8 +5,8 @@ import * as data from './data';
 import * as utils from './utils';
 
 const bot = new discord.Client({
-    partials: ["REACTION", "MESSAGE"],
-    ws: { intents: ["GUILDS", "GUILD_MESSAGES"] }
+    partials: ["REACTION", "MESSAGE", "CHANNEL"],
+    ws: { intents: ["GUILDS", "GUILD_MESSAGES", "DIRECT_MESSAGES"] }
 });
 const botId = process.env.BOT_ID;
 const prefix = process.env.COMMAND;
