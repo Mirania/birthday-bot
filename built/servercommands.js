@@ -24,6 +24,7 @@ function help(message) {
         .setFooter("For more info, ask Pool#5926!")
         .setTitle("Here's what I can do:")
         .addField(`${prefix}birthday`, "Configure your birthday so I'll announce it!")
+        .addField(`${prefix}birthday some person`, "Mention someone or write their name/nickname and I'll tell you their birthday.")
         .addField(`${prefix}rolename`, "Give your birthday role a name of your choosing.")
         .addField(`${prefix}rolecolor`, "Give your birthday role your preferred color.")
         .addField(`${prefix}nextbirthday`, "Check when I'll announce the next birthday.")
@@ -31,9 +32,13 @@ function help(message) {
     utils.sendEmbed(message, embed);
 }
 exports.help = help;
-function birthday(message) {
+function birthday(message, args) {
     var _a, _b;
     return __awaiter(this, void 0, void 0, function* () {
+        if (args.length >= 1) {
+            spybirthday(message, args);
+            return;
+        }
         const data = data_1.getData();
         const userState = (_b = (_a = data[message.author.id]) === null || _a === void 0 ? void 0 : _a.state) !== null && _b !== void 0 ? _b : data_1.State.None;
         if (userState === data_1.State.Done) {
@@ -53,6 +58,33 @@ function birthday(message) {
     });
 }
 exports.birthday = birthday;
+function spybirthday(message, args) {
+    var _a;
+    return __awaiter(this, void 0, void 0, function* () {
+        let targetId;
+        if (args.length === 1 && args[0].startsWith("<@")) {
+            // mentioned a user
+            targetId = args[0].replace(/<|@|!|>/g, "");
+        }
+        else {
+            // wrote a user's name
+            const name = args.join(" ").toLowerCase();
+            const members = yield message.guild.members.fetch();
+            let member = (_a = members.find(member => { var _a; return name === ((_a = member.user.username) === null || _a === void 0 ? void 0 : _a.toLowerCase()); })) !== null && _a !== void 0 ? _a : members.find(member => { var _a; return name === ((_a = member.nickname) === null || _a === void 0 ? void 0 : _a.toLowerCase()); });
+            targetId = member === null || member === void 0 ? void 0 : member.id;
+        }
+        if (targetId === undefined) {
+            utils.send(message, "Sorry, I don't recognise that user at all!");
+            return;
+        }
+        const bday = data_1.getData()[targetId];
+        if (!bday) {
+            utils.send(message, "That person hasn't configured their birthday yet.");
+            return;
+        }
+        utils.send(message, `Their birthday will happen on ${dmcommands_1.numberToMonth(bday.month)} ${bday.day}, in the ${bday.tz} timezone!`);
+    });
+}
 function nextbirthday(message) {
     return __awaiter(this, void 0, void 0, function* () {
         const config = data_1.getConfig();

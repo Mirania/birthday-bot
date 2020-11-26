@@ -1,6 +1,6 @@
 import * as discord from 'discord.js';
 export declare function help(message: discord.Message): void;
-export declare function birthday(message: discord.Message): Promise<void>;
+export declare function birthday(message: discord.Message, args: string[]): Promise<void>;
 export declare function nextbirthday(message: discord.Message): Promise<void>;
 export declare function message(message: discord.Message): void;
 export declare function channel(message: discord.Message): Promise<void>;

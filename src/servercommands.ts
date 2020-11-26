@@ -14,6 +14,7 @@ export function help(message: discord.Message): void {
         .setFooter("For more info, ask Pool#5926!")
         .setTitle("Here's what I can do:")
         .addField(`${prefix}birthday`, "Configure your birthday so I'll announce it!")
+        .addField(`${prefix}birthday some person`, "Mention someone or write their name/nickname and I'll tell you their birthday.")
         .addField(`${prefix}rolename`, "Give your birthday role a name of your choosing.")
         .addField(`${prefix}rolecolor`, "Give your birthday role your preferred color.")
         .addField(`${prefix}nextbirthday`, "Check when I'll announce the next birthday.")
@@ -23,7 +24,12 @@ export function help(message: discord.Message): void {
     utils.sendEmbed(message, embed);
 }
 
-export async function birthday(message: discord.Message): Promise<void> {
+export async function birthday(message: discord.Message, args: string[]): Promise<void> {
+    if (args.length >= 1) {
+        spybirthday(message, args);
+        return;
+    }
+
     const data = getData();
 
     const userState = data[message.author.id]?.state ?? State.None;
@@ -45,6 +51,36 @@ export async function birthday(message: discord.Message): Promise<void> {
         "Please answer in a format like `30/1` or `July 20`."
     );
     data[message.author.id] = { state: State.AwaitingDate, roleState: RoleState.None };
+}
+
+async function spybirthday(message: discord.Message, args: string[]): Promise<void> {
+    let targetId: string;
+
+    if (args.length === 1 && args[0].startsWith("<@")) {
+        // mentioned a user
+        targetId = args[0].replace(/<|@|!|>/g, "");
+    } else {
+        // wrote a user's name
+        const name = args.join(" ").toLowerCase();
+        const members = await message.guild.members.fetch();
+        let member = members.find(member => name === member.user.username?.toLowerCase()) ??
+                     members.find(member => name === member.nickname?.toLowerCase());
+        targetId = member?.id;
+    }
+
+    if (targetId === undefined) {
+        utils.send(message, "Sorry, I don't recognise that user at all!");
+        return;
+    }
+
+    const bday = getData()[targetId];
+
+    if (!bday) {
+        utils.send(message, "That person hasn't configured their birthday yet.");
+        return;
+    }
+
+    utils.send(message, `Their birthday will happen on ${numberToMonth(bday.month)} ${bday.day}, in the ${bday.tz} timezone!`);
 }
 
 export async function nextbirthday(message: discord.Message): Promise<void> {

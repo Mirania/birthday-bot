@@ -18,7 +18,7 @@ const data = require("./data");
 const utils = require("./utils");
 const bot = new discord.Client({
     partials: ["REACTION", "MESSAGE", "CHANNEL"],
-    ws: { intents: ["GUILDS", "GUILD_MESSAGES", "DIRECT_MESSAGES"] }
+    ws: { intents: ["GUILDS", "GUILD_MESSAGES", "GUILD_MEMBERS", "DIRECT_MESSAGES"] }
 });
 const botId = process.env.BOT_ID;
 const prefix = process.env.COMMAND;
