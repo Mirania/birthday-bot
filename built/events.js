@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.recalculateUtcsForThisYear = exports.shouldRecalculateUtcs = exports.announceBirthdays = void 0;
+exports.recalculateUtcsForThisYear = exports.shouldRecalculateUtcs = exports.announceReminders = exports.announceBirthdays = void 0;
 const data_1 = require("./data");
 const moment = require("moment-timezone");
 const utils = require("./utils");
@@ -56,6 +56,28 @@ function announceBirthdays() {
     });
 }
 exports.announceBirthdays = announceBirthdays;
+function announceReminders() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const reminders = data_1.getReminders();
+        const nowUtc = moment().utc().valueOf();
+        const bot = _1.self();
+        for (const key in reminders) {
+            const reminder = reminders[key];
+            if (reminder.timestamp > nowUtc)
+                continue;
+            const channel = yield utils.getIfExists(bot.channels, reminder.channelId);
+            if (!channel) {
+                // this can't be announced anymore
+                delete reminders[key];
+                continue;
+            }
+            yield utils.send(channel, `${utils.mentionUser(reminder.authorId)} says: ${reminder.text}`);
+            reminder.isPeriodic ? renewReminder(reminder) : delete reminders[key];
+        }
+        data_1.saveReminders(reminders);
+    });
+}
+exports.announceReminders = announceReminders;
 function shouldRecalculateUtcs() {
     const config = data_1.getConfig();
     const now = moment();
@@ -82,6 +104,36 @@ function recalculateUtcsForThisYear() {
     data_1.saveConfig();
 }
 exports.recalculateUtcsForThisYear = recalculateUtcsForThisYear;
+function renewReminder(reminder) {
+    const date = moment();
+    for (const unit in reminder.timeValues) {
+        const value = reminder.timeValues[unit];
+        switch (unit) {
+            case "year":
+            case "y":
+                date.add(value, "year");
+                break;
+            case "month":
+            case "mo":
+                date.add(value, "month");
+                break;
+            case "day":
+            case "d":
+                date.add(value, "day");
+                break;
+            case "hour":
+            case "h":
+                date.add(value, "hour");
+                break;
+            case "minute":
+            case "m":
+                date.add(value, "minute");
+                break;
+        }
+    }
+    date.subtract(5, "second");
+    reminder.timestamp = date.utc().valueOf();
+}
 function giveRoleToUser(user) {
     var _a;
     return __awaiter(this, void 0, void 0, function* () {

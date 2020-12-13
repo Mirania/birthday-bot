@@ -9,3 +9,5 @@ export declare function enable(message: discord.Message): void;
 export declare function disable(message: discord.Message): void;
 export declare function rolename(message: discord.Message): Promise<void>;
 export declare function rolecolor(message: discord.Message): Promise<void>;
+export declare function reminder(message: discord.Message, args: string[]): void;
+export declare function periodicreminder(message: discord.Message, args: string[]): void;

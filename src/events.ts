@@ -1,5 +1,5 @@
 import * as discord from "discord.js";
-import { getConfig, getData, Gender, State, saveConfig, saveUser, getRandomImage, RoleState } from "./data";
+import { getConfig, getData, Gender, State, saveConfig, saveUser, getRandomImage, RoleState, getReminders, saveReminders, Reminder } from "./data";
 import * as moment from 'moment-timezone';
 import * as utils from "./utils";
 import { bdayUtc } from "./dmcommands";
@@ -44,6 +44,31 @@ export async function announceBirthdays(): Promise<void> {
     }
 }
 
+export async function announceReminders(): Promise<void> {
+    const reminders = getReminders();
+    const nowUtc = moment().utc().valueOf();
+    const bot = self();
+
+    for (const key in reminders) {
+        const reminder = reminders[key];
+
+        if (reminder.timestamp > nowUtc) continue;
+
+        const channel = await utils.getIfExists(bot.channels, reminder.channelId) as discord.TextChannel;
+
+        if (!channel) {
+            // this can't be announced anymore
+            delete reminders[key];
+            continue;
+        }
+
+        await utils.send(channel, `${utils.mentionUser(reminder.authorId)} says: ${reminder.text}`);
+        reminder.isPeriodic ? renewReminder(reminder) : delete reminders[key];
+    }
+
+    saveReminders(reminders);
+}
+
 export function shouldRecalculateUtcs(): boolean {
     const config = getConfig();
     const now = moment();
@@ -70,6 +95,24 @@ export function recalculateUtcsForThisYear(): void {
 
     config.lastCalculatedUtcYear = now.year();
     saveConfig();
+}
+
+function renewReminder(reminder: Reminder): void {
+    const date = moment();
+
+    for (const unit in reminder.timeValues) {
+        const value = reminder.timeValues[unit];
+        switch (unit) {
+            case "year": case "y": date.add(value, "year"); break;
+            case "month": case "mo": date.add(value, "month"); break;
+            case "day": case "d": date.add(value, "day"); break;
+            case "hour": case "h": date.add(value, "hour"); break;
+            case "minute": case "m": date.add(value, "minute"); break;
+        }
+    }
+
+    date.subtract(5, "second");
+    reminder.timestamp = date.utc().valueOf();
 }
 
 async function giveRoleToUser(user: discord.GuildMember): Promise<boolean> {

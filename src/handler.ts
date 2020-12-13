@@ -11,7 +11,8 @@ import { setInterval } from 'timers';
 type CommandFunction = (message: discord.Message, args?: string[]) => void | Promise<void>;
 
 const commandList: { [name: string]: CommandFunction } = { ...server, ...meta};
-const eventInterval = utils.minutes(15);
+const bdayEventInterval = utils.minutes(15);
+const reminderEventInterval = utils.seconds(45);
 
 export function handleCommand(message: discord.Message): void {
     const content = message.content.split(" ").filter(item => item!==""); 
@@ -55,7 +56,7 @@ export function handleEvents(): void {
             utils.log("periodic 'recalculateUtcsForThisYear'");
             events.recalculateUtcsForThisYear();
         }
-    }, eventInterval);
+    }, bdayEventInterval);
 
     setInterval(() => {
         const config = getConfig();
@@ -63,5 +64,10 @@ export function handleEvents(): void {
         if (!utils.areConfigsSet() || !config.enabled) return;
         utils.log("periodic 'announceBirthdays'");
         events.announceBirthdays();
-    }, eventInterval);
+    }, bdayEventInterval);
+
+    setInterval(() => {
+        utils.log("periodic 'announceReminders'");
+        events.announceReminders();
+    }, reminderEventInterval);
 }

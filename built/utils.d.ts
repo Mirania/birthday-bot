@@ -57,6 +57,10 @@ export declare function areConfigsSet(): boolean;
  */
 export declare function minutes(amount: number): number;
 /**
+ * Returns an amount of seconds in ms.
+ */
+export declare function seconds(amount: number): number;
+/**
  * Prints a message to the console.
  */
 export declare function log(text: string): void;

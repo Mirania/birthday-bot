@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.rolecolor = exports.rolename = exports.disable = exports.enable = exports.roles = exports.channel = exports.message = exports.nextbirthday = exports.birthday = exports.help = void 0;
+exports.periodicreminder = exports.reminder = exports.rolecolor = exports.rolename = exports.disable = exports.enable = exports.roles = exports.channel = exports.message = exports.nextbirthday = exports.birthday = exports.help = void 0;
 const discord = require("discord.js");
 const utils = require("./utils");
 const data_1 = require("./data");
@@ -28,6 +28,7 @@ function help(message) {
         .addField(`${prefix}rolename`, "Give your birthday role a name of your choosing.")
         .addField(`${prefix}rolecolor`, "Give your birthday role your preferred color.")
         .addField(`${prefix}nextbirthday`, "Check when I'll announce the next birthday.")
+        .addField(`${prefix}reminder / ${prefix}periodicreminder`, "Write a message that I'll remind you of later.")
         .addField(`${prefix}message / ${prefix}channel / ${prefix}roles / ${prefix}enable / ${prefix}disable`, "Announcements setup. Admin-only.");
     utils.sendEmbed(message, embed);
 }
@@ -348,6 +349,103 @@ function rolecolor(message) {
     });
 }
 exports.rolecolor = rolecolor;
+function reminder(message, args) {
+    buildReminder(message, args, false);
+}
+exports.reminder = reminder;
+function periodicreminder(message, args) {
+    if (!utils.isAdmin(message) && !utils.isOwner(message)) {
+        utils.send(message, "You must be an administrator to use this command!");
+        return;
+    }
+    buildReminder(message, args, true);
+}
+exports.periodicreminder = periodicreminder;
+function buildReminder(message, args, isPeriodic) {
+    var _a;
+    return __awaiter(this, void 0, void 0, function* () {
+        if (!message.guild) {
+            utils.send(message, "Please use this command in a server instead.");
+            return;
+        }
+        const usage = `${utils.usage("reminder", "1d10h20m It is time!")}\n` +
+            "This would make me ping you saying \"It is time!\" in 1 day, 10 hours and 20 minutes from now.\n" +
+            "You can use the units `year/y`, `month/mo`, `day/d`, `hour/h`, and `minute/m`.";
+        if (args.length < 2) {
+            utils.send(message, `To set a reminder, you can type:\n${usage}`);
+            return;
+        }
+        const tokens = (_a = args[0].match(/[0-9]+|[A-Za-z]+/g)) !== null && _a !== void 0 ? _a : [,];
+        const timeValues = {};
+        for (let i = 0; i < tokens.length; i += 2) {
+            let value;
+            if (i + 1 >= tokens.length || timeValues[tokens[i + 1]] != undefined || isNaN(value = Number(tokens[i])) || value <= 0) {
+                utils.send(message, `This time seems to be invalid. Try something like:\n${usage}`);
+                return;
+            }
+            timeValues[tokens[i + 1]] = value;
+        }
+        const text = args.slice(1).join(" ");
+        const date = moment();
+        let offset = 0;
+        if (text.length > 1000) {
+            utils.send(message, `That message is way too long!`);
+            return;
+        }
+        for (const unit in timeValues) {
+            const value = timeValues[unit];
+            switch (unit) {
+                case "year":
+                case "y":
+                    date.add(value, "year");
+                    offset += value * 31104000;
+                    break;
+                case "month":
+                case "mo":
+                    date.add(value, "month");
+                    offset += value * 2592000;
+                    break;
+                case "day":
+                case "d":
+                    date.add(value, "day");
+                    offset += value * 86400;
+                    break;
+                case "hour":
+                case "h":
+                    date.add(value, "hour");
+                    offset += value * 3600;
+                    break;
+                case "minute":
+                case "m":
+                    date.add(value, "minute");
+                    offset += value * 60;
+                    break;
+                default:
+                    utils.send(message, `This time seems to be invalid. Try something like:\n${usage}`);
+                    return;
+            }
+        }
+        if (offset < 60) {
+            utils.send(message, `1 minute into the future is the earliest you can set a reminder to!`);
+            return;
+        }
+        if (offset > 31104000) {
+            utils.send(message, `1 year into the future is the latest you can set a reminder to!`);
+            return;
+        }
+        const reminder = {
+            isPeriodic,
+            text,
+            timestamp: date.utc().valueOf(),
+            authorId: message.author.id,
+            channelId: message.channel.id
+        };
+        if (isPeriodic)
+            reminder.timeValues = timeValues;
+        yield data_1.setReminder(reminder);
+        utils.send(message, "Your reminder has been set!");
+    });
+}
 function enumerateMissingTitleRoles(roles) {
     const missing = [];
     if (!roles[0])

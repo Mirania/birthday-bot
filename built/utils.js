@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isLeapYear = exports.getFileExtension = exports.randomElement = exports.serverMemberName = exports.pad = exports.log = exports.minutes = exports.areConfigsSet = exports.resolveBirthdayMessage = exports.isHavingBirthday = exports.mentionChannel = exports.mentionUser = exports.isOwner = exports.isAdmin = exports.usage = exports.getIfExists = exports.sendEmbed = exports.send = void 0;
+exports.isLeapYear = exports.getFileExtension = exports.randomElement = exports.serverMemberName = exports.pad = exports.log = exports.seconds = exports.minutes = exports.areConfigsSet = exports.resolveBirthdayMessage = exports.isHavingBirthday = exports.mentionChannel = exports.mentionUser = exports.isOwner = exports.isAdmin = exports.usage = exports.getIfExists = exports.sendEmbed = exports.send = void 0;
 const discord = require("discord.js");
 const data_1 = require("./data");
 const moment = require("moment-timezone");
@@ -128,6 +128,13 @@ function minutes(amount) {
     return amount * 60 * 1000;
 }
 exports.minutes = minutes;
+/**
+ * Returns an amount of seconds in ms.
+ */
+function seconds(amount) {
+    return amount * 1000;
+}
+exports.seconds = seconds;
 /**
  * Prints a message to the console.
  */

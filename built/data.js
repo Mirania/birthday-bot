@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTimezoneOffsets = exports.getUser = exports.getRandomImage = exports.getData = exports.getConfig = exports.saveConfig = exports.saveUser = exports.saveImmediate = exports.loadImmediate = exports.init = exports.gatherImages = exports.RoleState = exports.State = exports.Gender = void 0;
+exports.setReminder = exports.getTimezoneOffsets = exports.getUser = exports.getRandomImage = exports.getReminders = exports.getData = exports.getConfig = exports.saveConfig = exports.saveReminders = exports.saveReminder = exports.saveUser = exports.saveImmediate = exports.loadImmediate = exports.init = exports.gatherImages = exports.RoleState = exports.State = exports.Gender = void 0;
 const db = require("./firebase-module");
 const moment = require("moment-timezone");
 const utils = require("./utils");
@@ -39,6 +39,7 @@ var RoleState;
 })(RoleState = exports.RoleState || (exports.RoleState = {}));
 let config = {};
 let data = {};
+let reminders = {};
 let images = [];
 // while i give these timezones some offset values, these may change so i'll recalculate them anyway
 const timezoneOffsets = {
@@ -105,12 +106,13 @@ exports.init = init;
  * Refreshes and loads everything.
  */
 function loadImmediate() {
-    var _a, _b;
+    var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         fillTimezones();
         gatherImages();
         config = (_a = yield db.get("config/")) !== null && _a !== void 0 ? _a : { enabled: true, lastCalculatedUtcYear: moment().year() };
         data = (_b = yield db.get("data/")) !== null && _b !== void 0 ? _b : {};
+        reminders = (_c = yield db.get("reminders/")) !== null && _c !== void 0 ? _c : {};
     });
 }
 exports.loadImmediate = loadImmediate;
@@ -121,6 +123,7 @@ function saveImmediate() {
     return __awaiter(this, void 0, void 0, function* () {
         yield db.post("config/", config);
         yield db.post("data/", data);
+        yield db.post("reminders/", reminders);
     });
 }
 exports.saveImmediate = saveImmediate;
@@ -130,6 +133,18 @@ function saveUser(userId) {
     });
 }
 exports.saveUser = saveUser;
+function saveReminder(reminder) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return yield db.push("reminders/", reminder);
+    });
+}
+exports.saveReminder = saveReminder;
+function saveReminders(reminders) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield db.post("reminders/", reminders);
+    });
+}
+exports.saveReminders = saveReminders;
 function saveConfig() {
     return __awaiter(this, void 0, void 0, function* () {
         yield db.post("config/", config);
@@ -144,6 +159,10 @@ function getData() {
     return data;
 }
 exports.getData = getData;
+function getReminders() {
+    return reminders;
+}
+exports.getReminders = getReminders;
 // returns undefined if no pictures available
 function getRandomImage() {
     if (images.length > 0)
@@ -158,3 +177,9 @@ function getTimezoneOffsets() {
     return timezoneOffsets;
 }
 exports.getTimezoneOffsets = getTimezoneOffsets;
+function setReminder(reminder) {
+    return __awaiter(this, void 0, void 0, function* () {
+        reminders[yield saveReminder(reminder)] = reminder;
+    });
+}
+exports.setReminder = setReminder;

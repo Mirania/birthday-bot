@@ -9,7 +9,8 @@ const events = require("./events");
 const data_1 = require("./data");
 const timers_1 = require("timers");
 const commandList = Object.assign(Object.assign({}, server), meta);
-const eventInterval = utils.minutes(15);
+const bdayEventInterval = utils.minutes(15);
+const reminderEventInterval = utils.seconds(45);
 function handleCommand(message) {
     const content = message.content.split(" ").filter(item => item !== "");
     const name = content[0].slice(1, content[0].length);
@@ -53,13 +54,17 @@ function handleEvents() {
             utils.log("periodic 'recalculateUtcsForThisYear'");
             events.recalculateUtcsForThisYear();
         }
-    }, eventInterval);
+    }, bdayEventInterval);
     timers_1.setInterval(() => {
         const config = data_1.getConfig();
         if (!utils.areConfigsSet() || !config.enabled)
             return;
         utils.log("periodic 'announceBirthdays'");
         events.announceBirthdays();
-    }, eventInterval);
+    }, bdayEventInterval);
+    timers_1.setInterval(() => {
+        utils.log("periodic 'announceReminders'");
+        events.announceReminders();
+    }, reminderEventInterval);
 }
 exports.handleEvents = handleEvents;

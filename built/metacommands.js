@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.invite = exports.save = exports.load = exports.recalculate = exports.checkbdays = void 0;
+exports.invite = exports.save = exports.load = exports.recalculate = exports.checkreminders = exports.checkbdays = void 0;
 const utils = require("./utils");
 const events = require("./events");
 const data = require("./data");
@@ -17,6 +17,15 @@ function checkbdays(message) {
     utils.log("'checkbdays' done.");
 }
 exports.checkbdays = checkbdays;
+function checkreminders(message) {
+    if (!utils.isOwner(message)) {
+        utils.send(message, "You must be a bot owner to use this command!");
+        return;
+    }
+    events.announceReminders();
+    utils.log("'checkreminders' done.");
+}
+exports.checkreminders = checkreminders;
 function recalculate(message) {
     if (!utils.isOwner(message)) {
         utils.send(message, "You must be a bot owner to use this command!");
@@ -49,7 +58,7 @@ function invite(message) {
         utils.send(message, "You must be a bot owner to use this command!");
         return;
     }
-    let link = `https://discordapp.com/oauth2/authorize?client_id=${process.env.BOT_ID}` +
+    const link = `https://discordapp.com/oauth2/authorize?client_id=${process.env.BOT_ID}` +
         `&scope=bot&permissions=${process.env.BOT_PERMS}`;
     utils.send(message, `Here you go!\n\n${link}`);
 }

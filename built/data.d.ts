@@ -21,6 +21,16 @@ export declare type Configurations = {
     lastRoleUsedIndex?: number;
     serverId?: string;
 };
+export declare type Reminder = {
+    isPeriodic: boolean;
+    text: string;
+    timestamp: number;
+    authorId: string;
+    channelId: string;
+    timeValues?: {
+        [unit: string]: number;
+    };
+};
 export declare enum Gender {
     Male = "Male",
     Female = "Female",
@@ -52,13 +62,21 @@ export declare function loadImmediate(): Promise<void>;
  */
 export declare function saveImmediate(): Promise<void>;
 export declare function saveUser(userId: string): Promise<void>;
+export declare function saveReminder(reminder: Reminder): Promise<string>;
+export declare function saveReminders(reminders: {
+    [key: string]: Reminder;
+}): Promise<void>;
 export declare function saveConfig(): Promise<void>;
 export declare function getConfig(): Configurations;
 export declare function getData(): {
     [userId: string]: Birthday;
+};
+export declare function getReminders(): {
+    [key: string]: Reminder;
 };
 export declare function getRandomImage(): string;
 export declare function getUser(message: discord.Message): Birthday;
 export declare function getTimezoneOffsets(): {
     [timezone: string]: number;
 };
+export declare function setReminder(reminder: Reminder): Promise<void>;

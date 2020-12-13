@@ -28,6 +28,15 @@ export type Configurations = {
     serverId?: string // id of server with announcement channel
 }
 
+export type Reminder = {
+    isPeriodic: boolean, // periodic? if yes, should renew once announced
+    text: string, // reminder message
+    timestamp: number, // unix time (ms) of target date
+    authorId: string, // user to be pinged
+    channelId: string, // destination channel
+    timeValues?: { [unit: string]: number } // used to renew a periodic reminder
+}
+
 export enum Gender {
     Male = "Male", Female = "Female", Other = "Other"
 }
@@ -42,6 +51,7 @@ export enum RoleState {
 
 let config: Configurations = {};
 let data: { [userId: string]: Birthday } = {};
+let reminders: { [key: string]: Reminder } = {};
 let images: string[] = [];
 
 // while i give these timezones some offset values, these may change so i'll recalculate them anyway
@@ -112,6 +122,7 @@ export async function loadImmediate(): Promise<void> {
     gatherImages();
     config = await db.get("config/") ?? {enabled: true, lastCalculatedUtcYear: moment().year()};
     data = await db.get("data/") ?? {};
+    reminders = await db.get("reminders/") ?? {};
 }
 
 /**
@@ -120,10 +131,19 @@ export async function loadImmediate(): Promise<void> {
 export async function saveImmediate(): Promise<void> {
     await db.post("config/", config);
     await db.post("data/", data);
+    await db.post("reminders/", reminders);
 }
 
 export async function saveUser(userId: string): Promise<void> {
     await db.post(`data/${userId}/`, data[userId]);
+}
+
+export async function saveReminder(reminder: Reminder): Promise<string> {
+    return await db.push("reminders/", reminder);
+}
+
+export async function saveReminders(reminders: { [key: string]: Reminder }): Promise<void> {
+    await db.post("reminders/", reminders);
 }
 
 export async function saveConfig(): Promise<void> {
@@ -138,6 +158,10 @@ export function getData(): { [userId: string]: Birthday } {
     return data;
 }
 
+export function getReminders(): { [key: string]: Reminder } {
+    return reminders;
+}
+
 // returns undefined if no pictures available
 export function getRandomImage(): string {
     if (images.length > 0) return utils.randomElement(images);
@@ -149,4 +173,8 @@ export function getUser(message: discord.Message): Birthday {
 
 export function getTimezoneOffsets(): { [timezone: string]: number } {
     return timezoneOffsets;
+}
+
+export async function setReminder(reminder: Reminder): Promise<void> {
+    reminders[await saveReminder(reminder)] = reminder;
 }

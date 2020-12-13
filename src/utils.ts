@@ -139,6 +139,13 @@ export function minutes(amount: number): number {
 }
 
 /**
+ * Returns an amount of seconds in ms.
+ */
+export function seconds(amount: number): number {
+    return amount * 1000;
+}
+
+/**
  * Prints a message to the console.
  */
 export function log(text: string): void {
