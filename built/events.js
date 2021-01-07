@@ -89,7 +89,11 @@ exports.shouldRecalculateUtcs = shouldRecalculateUtcs;
 function recalculateUtcsForThisYear() {
     const config = data_1.getConfig();
     const data = data_1.getData();
-    const now = moment(), nowUtc = now.utc().valueOf();
+    const now = moment();
+    // quick bugfix attempt
+    if (now.year() === config.lastCalculatedUtcYear)
+        now.add(1, "year");
+    const nowUtc = now.utc().valueOf();
     for (const user in data) {
         const bday = data[user];
         if (bday.month === undefined)
