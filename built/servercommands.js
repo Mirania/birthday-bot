@@ -16,6 +16,7 @@ const data_1 = require("./data");
 const dmcommands_1 = require("./dmcommands");
 const moment = require("moment-timezone");
 const _1 = require(".");
+const errors_1 = require("./errors");
 function help(message) {
     const prefix = process.env.COMMAND;
     const embed = new discord.MessageEmbed()
@@ -115,12 +116,22 @@ function nextbirthday(message) {
             return;
         }
         else {
-            const guild = yield _1.self().guilds.fetch(config.serverId);
-            const member = yield guild.members.fetch(closestUserId);
-            const bday = data[closestUserId];
-            let response = `The next birthday is that of ${utils.serverMemberName(member)}. ` +
-                `It will happen on ${dmcommands_1.numberToMonth(bday.month)} ${bday.day}, in the ${bday.tz} timezone.`;
-            utils.send(message, response);
+            try {
+                const guild = yield _1.self().guilds.fetch(config.serverId);
+                const member = yield guild.members.fetch(closestUserId);
+                const bday = data[closestUserId];
+                let response = `The next birthday is that of ${utils.serverMemberName(member)}. ` +
+                    `It will happen on ${dmcommands_1.numberToMonth(bday.month)} ${bday.day}, in the ${bday.tz} timezone.`;
+                utils.send(message, response);
+            }
+            catch (e) {
+                if (errors_1.isUnknownMemberError(e)) {
+                    console.log(`${closestUserId} is an unknown user, clearing their data...`);
+                    delete data[closestUserId];
+                    data_1.deleteUser(closestUserId);
+                    nextbirthday(message); // now retry
+                }
+            }
         }
     });
 }

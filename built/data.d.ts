@@ -61,6 +61,7 @@ export declare function loadImmediate(): Promise<void>;
  * Saves everything.
  */
 export declare function saveImmediate(): Promise<void>;
+export declare function deleteUser(userId: string): Promise<void>;
 export declare function saveUser(userId: string): Promise<void>;
 export declare function saveReminder(reminder: Reminder): Promise<string>;
 export declare function saveReminders(reminders: {

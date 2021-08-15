@@ -1,9 +1,10 @@
 import * as discord from 'discord.js';
 import * as utils from './utils';
-import { State, getData, getConfig, getUser, saveConfig, Birthday, RoleState, setReminder, Reminder } from './data';
+import { State, getData, getConfig, getUser, saveConfig, Birthday, RoleState, setReminder, Reminder, deleteUser } from './data';
 import { numberToMonth } from './dmcommands'; 
 import * as moment from 'moment-timezone';
 import { self } from '.';
+import { isUnknownMemberError } from './errors';
 
 export function help(message: discord.Message): void {
     const prefix = process.env.COMMAND;
@@ -113,12 +114,21 @@ export async function nextbirthday(message: discord.Message): Promise<void> {
         utils.send(message, "I have no upcoming birthdays configured.");
         return;
     } else {
-        const guild = await self().guilds.fetch(config.serverId);
-        const member = await guild.members.fetch(closestUserId);
-        const bday = data[closestUserId];
-        let response = `The next birthday is that of ${utils.serverMemberName(member)}. ` +
-            `It will happen on ${numberToMonth(bday.month)} ${bday.day}, in the ${bday.tz} timezone.`;
-        utils.send(message, response);
+        try {
+            const guild = await self().guilds.fetch(config.serverId);
+            const member = await guild.members.fetch(closestUserId);
+            const bday = data[closestUserId];
+            let response = `The next birthday is that of ${utils.serverMemberName(member)}. ` +
+                `It will happen on ${numberToMonth(bday.month)} ${bday.day}, in the ${bday.tz} timezone.`;
+            utils.send(message, response);
+        } catch (e) {
+            if (isUnknownMemberError(e)) {
+                console.log(`${closestUserId} is an unknown user, clearing their data...`);
+                delete data[closestUserId];
+                deleteUser(closestUserId);
+                nextbirthday(message); // now retry
+            }
+        }
     }
 }
 

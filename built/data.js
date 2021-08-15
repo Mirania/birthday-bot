@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setReminder = exports.getTimezoneOffsets = exports.getUser = exports.getRandomImage = exports.getReminders = exports.getData = exports.getConfig = exports.saveConfig = exports.saveReminders = exports.saveReminder = exports.saveUser = exports.saveImmediate = exports.loadImmediate = exports.init = exports.gatherImages = exports.RoleState = exports.State = exports.Gender = void 0;
+exports.setReminder = exports.getTimezoneOffsets = exports.getUser = exports.getRandomImage = exports.getReminders = exports.getData = exports.getConfig = exports.saveConfig = exports.saveReminders = exports.saveReminder = exports.saveUser = exports.deleteUser = exports.saveImmediate = exports.loadImmediate = exports.init = exports.gatherImages = exports.RoleState = exports.State = exports.Gender = void 0;
 const db = require("./firebase-module");
 const moment = require("moment-timezone");
 const utils = require("./utils");
@@ -127,6 +127,12 @@ function saveImmediate() {
     });
 }
 exports.saveImmediate = saveImmediate;
+function deleteUser(userId) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield db.remove(`data/${userId}`);
+    });
+}
+exports.deleteUser = deleteUser;
 function saveUser(userId) {
     return __awaiter(this, void 0, void 0, function* () {
         yield db.post(`data/${userId}/`, data[userId]);

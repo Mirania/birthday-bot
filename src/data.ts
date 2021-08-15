@@ -134,6 +134,10 @@ export async function saveImmediate(): Promise<void> {
     await db.post("reminders/", reminders);
 }
 
+export async function deleteUser(userId: string): Promise<void> {
+    await db.remove(`data/${userId}`);
+}
+
 export async function saveUser(userId: string): Promise<void> {
     await db.post(`data/${userId}/`, data[userId]);
 }
