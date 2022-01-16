@@ -72,6 +72,7 @@ const timezoneOffsets = {
     "Brazil/East": -180,
     "Canada/Central": -300,
     "America/El_Salvador": -360,
+    "America/Vancouver": -480,
     "US/Arizona": -420,
     "Atlantic/South_Georgia": -120,
     "Canada/Newfoundland": -150,
@@ -79,7 +80,14 @@ const timezoneOffsets = {
     "US/Hawaii": -600,
     "US/Samoa": -660,
     "Etc/GMT+12": -720,
-    "Pacific/Marquesas": -570
+    "Pacific/Marquesas": -570,
+    "Europe/Lisbon": 0,
+    "Europe/Madrid": 60,
+    "Europe/Helsinki": 120,
+    "Asia/Baghdad": 180,
+    "Asia/Muscat": 240,
+    "Asia/Kabul": 300,
+    "Pacific/Port_Moresby": 600
 };
 function fillTimezones() {
     for (const tz in timezoneOffsets) {
