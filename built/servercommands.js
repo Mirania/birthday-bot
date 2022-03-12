@@ -29,7 +29,6 @@ function help(message) {
         .addField(`${prefix}rolename`, "Give your birthday role a name of your choosing.")
         .addField(`${prefix}rolecolor`, "Give your birthday role your preferred color.")
         .addField(`${prefix}nextbirthday`, "Check when I'll announce the next birthday.")
-        .addField(`${prefix}reminder / ${prefix}periodicreminder`, "Write a message that I'll remind you of later.")
         .addField(`${prefix}message / ${prefix}channel / ${prefix}roles / ${prefix}enable / ${prefix}disable`, "Announcements setup. Admin-only.");
     utils.sendEmbed(message, embed);
 }
@@ -361,98 +360,175 @@ function rolecolor(message) {
 }
 exports.rolecolor = rolecolor;
 function reminder(message, args) {
-    buildReminder(message, args, false);
+    // this is a hidden command
+    if (!utils.isOwner(message)) {
+        return;
+    }
+    const usage = `${utils.usage("reminder", "in/at date message")}\n` +
+        "For relative time (in), 'date' should be something like 1d10h20m.\n" +
+        "For absolute time (at), 'date' should be something like 30/01/2030 00:45. This uses the bot owner timezone.";
+    if (args.length < 3) {
+        utils.send(message, `To set a reminder, you can type:\n${usage}`);
+        return;
+    }
+    if (args[0] === "in") {
+        buildRelativeTimeReminder(message, args, false);
+    }
+    else if (args[0] === "at") {
+        buildAbsoluteTimeReminder(message, args);
+    }
+    else {
+        utils.send(message, `To set a reminder, you can type:\n${usage}`);
+        return;
+    }
 }
 exports.reminder = reminder;
 function periodicreminder(message, args) {
-    if (!utils.isAdmin(message) && !utils.isOwner(message)) {
-        utils.send(message, "You must be an administrator to use this command!");
+    // this is a hidden command
+    if (!utils.isOwner(message)) {
         return;
     }
-    buildReminder(message, args, true);
+    if (args.length < 3) {
+        const usage = `${utils.usage("periodicreminder", "date message")}\n` +
+            "The 'date' should be something like 1d10h20m.";
+        utils.send(message, `To set a reminder, you can type:\n${usage}`);
+    }
+    buildRelativeTimeReminder(message, args, true);
 }
 exports.periodicreminder = periodicreminder;
-function buildReminder(message, args, isPeriodic) {
+function parseRelativeTime(start, relativeTime) {
     var _a;
+    const tokens = (_a = relativeTime.match(/[0-9]+|[A-Za-z]+/g)) !== null && _a !== void 0 ? _a : [,];
+    const timeValues = {};
+    for (let i = 0; i < tokens.length; i += 2) {
+        let value;
+        if (i + 1 >= tokens.length || timeValues[tokens[i + 1]] != undefined || isNaN(value = Number(tokens[i])) || value <= 0) {
+            return { valid: false };
+        }
+        timeValues[tokens[i + 1]] = value;
+    }
+    const date = moment(start);
+    for (const unit in timeValues) {
+        const value = timeValues[unit];
+        switch (unit) {
+            case "year":
+            case "y":
+                date.add(value, "year");
+                break;
+            case "month":
+            case "mo":
+                date.add(value, "month");
+                break;
+            case "day":
+            case "d":
+                date.add(value, "day");
+                break;
+            case "hour":
+            case "h":
+                date.add(value, "hour");
+                break;
+            case "minute":
+            case "m":
+                date.add(value, "minute");
+                break;
+            default: return { valid: false };
+        }
+    }
+    return { valid: true, date, timeValues };
+}
+function buildRelativeTimeReminder(message, args, isPeriodic) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!message.guild) {
             utils.send(message, "Please use this command in a server instead.");
             return;
         }
-        const usage = `${utils.usage("reminder", "1d10h20m It is time!")}\n` +
+        const usage = `${utils.usage("reminder", "in 1d10h20m It is time!")}\n` +
             "This would make me ping you saying \"It is time!\" in 1 day, 10 hours and 20 minutes from now.\n" +
             "You can use the units `year/y`, `month/mo`, `day/d`, `hour/h`, and `minute/m`.";
-        if (args.length < 2) {
+        if (args.length < (isPeriodic ? 2 : 3)) {
             utils.send(message, `To set a reminder, you can type:\n${usage}`);
             return;
         }
-        const tokens = (_a = args[0].match(/[0-9]+|[A-Za-z]+/g)) !== null && _a !== void 0 ? _a : [,];
-        const timeValues = {};
-        for (let i = 0; i < tokens.length; i += 2) {
-            let value;
-            if (i + 1 >= tokens.length || timeValues[tokens[i + 1]] != undefined || isNaN(value = Number(tokens[i])) || value <= 0) {
-                utils.send(message, `This time seems to be invalid. Try something like:\n${usage}`);
-                return;
-            }
-            timeValues[tokens[i + 1]] = value;
+        const now = moment(), nowUtc = now.utc().valueOf();
+        const parsedDate = parseRelativeTime(now, args[isPeriodic ? 0 : 1]);
+        if (!parsedDate.valid) {
+            utils.send(message, `This time seems to be invalid. Try something like:\n${usage}`);
+            return;
         }
-        const text = args.slice(1).join(" ");
-        const date = moment();
-        let offset = 0;
+        const dateUtc = parsedDate.date.utc().valueOf();
+        const text = args.slice(isPeriodic ? 1 : 2).join(" ");
         if (text.length > 1000) {
             utils.send(message, `That message is way too long!`);
             return;
         }
-        for (const unit in timeValues) {
-            const value = timeValues[unit];
-            switch (unit) {
-                case "year":
-                case "y":
-                    date.add(value, "year");
-                    offset += value * 31104000;
-                    break;
-                case "month":
-                case "mo":
-                    date.add(value, "month");
-                    offset += value * 2592000;
-                    break;
-                case "day":
-                case "d":
-                    date.add(value, "day");
-                    offset += value * 86400;
-                    break;
-                case "hour":
-                case "h":
-                    date.add(value, "hour");
-                    offset += value * 3600;
-                    break;
-                case "minute":
-                case "m":
-                    date.add(value, "minute");
-                    offset += value * 60;
-                    break;
-                default:
-                    utils.send(message, `This time seems to be invalid. Try something like:\n${usage}`);
-                    return;
-            }
-        }
-        if (offset < 60) {
+        if (dateUtc - nowUtc < 60) {
             utils.send(message, `1 minute into the future is the earliest you can set a reminder to!`);
             return;
         }
-        if (offset > 31104000) {
+        if (dateUtc - nowUtc > 31104000) {
             utils.send(message, `1 year into the future is the latest you can set a reminder to!`);
             return;
         }
         const reminder = {
             isPeriodic,
             text,
-            timestamp: date.utc().valueOf(),
+            timestamp: dateUtc,
             authorId: message.author.id,
             channelId: message.channel.id
         };
         if (isPeriodic)
-            reminder.timeValues = timeValues;
+            reminder.timeValues = parsedDate.timeValues;
+        yield data_1.setReminder(reminder);
+        utils.send(message, "Your reminder has been set!");
+    });
+}
+function parseAbsoluteTime(absoluteTime) {
+    if (!/[\d]{2}\/[\d]{2}\/[\d]{4} [\d]{2}:[\d]{2}/g.test(absoluteTime)) {
+        return { valid: false };
+    }
+    const date = moment(absoluteTime, "DD/MM/YYYY HH:mm").tz(process.env.OWNER_TIMEZONE.replace(/ /g, "_"));
+    return { valid: true, date };
+}
+function buildAbsoluteTimeReminder(message, args) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (!message.guild) {
+            utils.send(message, "Please use this command in a server instead.");
+            return;
+        }
+        const usage = `${utils.usage("reminder", "at 31/01/2030 00:45 It is time!")}\n` +
+            "This would make me ping you saying \"It is time!\" at exactly that date.\n" +
+            "This uses the bot owner's timezone.";
+        if (args.length < 4) {
+            utils.send(message, `To set a reminder, you can type:\n${usage}`);
+            return;
+        }
+        const now = moment(), nowUtc = now.utc().valueOf();
+        const parsedDate = parseAbsoluteTime(`${args[1]} ${args[2]}`);
+        if (!parsedDate.valid) {
+            utils.send(message, `This time seems to be invalid. Try something like:\n${usage}`);
+            return;
+        }
+        const dateUtc = parsedDate.date.utc().valueOf();
+        const text = args.slice(3).join(" ");
+        if (text.length > 1000) {
+            utils.send(message, `That message is way too long!`);
+            return;
+        }
+        if (dateUtc - nowUtc < 60) {
+            utils.send(message, `1 minute into the future is the earliest you can set a reminder to!`);
+            return;
+        }
+        if (dateUtc - nowUtc > 31104000) {
+            utils.send(message, `1 year into the future is the latest you can set a reminder to!`);
+            return;
+        }
+        const reminder = {
+            isPeriodic: false,
+            text,
+            timestamp: dateUtc,
+            authorId: message.author.id,
+            channelId: message.channel.id
+        };
         yield data_1.setReminder(reminder);
         utils.send(message, "Your reminder has been set!");
     });
