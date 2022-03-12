@@ -525,7 +525,7 @@ async function buildAbsoluteTimeReminder(message: discord.Message, args: string[
         return;
     }
 
-    const now = moment(), nowUtc = now.utc().valueOf();
+    const now = moment().tz(process.env.OWNER_TIMEZONE.replace(/ /g, "_")), nowUtc = now.utc().valueOf();
     const parsedDate = parseAbsoluteTime(`${args[1]} ${args[2]}`);
 
     if (!parsedDate.valid) {

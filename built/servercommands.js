@@ -502,7 +502,7 @@ function buildAbsoluteTimeReminder(message, args) {
             utils.send(message, `To set a reminder, you can type:\n${usage}`);
             return;
         }
-        const now = moment(), nowUtc = now.utc().valueOf();
+        const now = moment().tz(process.env.OWNER_TIMEZONE.replace(/ /g, "_")), nowUtc = now.utc().valueOf();
         const parsedDate = parseAbsoluteTime(`${args[1]} ${args[2]}`);
         if (!parsedDate.valid) {
             utils.send(message, `This time seems to be invalid. Try something like:\n${usage}`);
