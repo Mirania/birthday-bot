@@ -475,12 +475,12 @@ async function buildRelativeTimeReminder(message: discord.Message, args: string[
         return;
     }
 
-    if (dateUtc - nowUtc < 60) {
+    if (dateUtc - nowUtc < 60 * 1000) {
         utils.send(message, `1 minute into the future is the earliest you can set a reminder to!`);
         return;
     }
 
-    if (dateUtc - nowUtc > 31104000) {
+    if (dateUtc - nowUtc > 365 * 24 * 60 * 60 * 1000) {
         utils.send(message, `1 year into the future is the latest you can set a reminder to!`);
         return;
     }
@@ -497,7 +497,7 @@ async function buildRelativeTimeReminder(message: discord.Message, args: string[
 
     await setReminder(reminder);
 
-    utils.send(message, "Your reminder has been set!");
+    utils.send(message, `Your reminder has been set for ${parsedDate.date.format("dddd, MMMM Do YYYY, HH:mm")}!`);
 }
 
 function parseAbsoluteTime(absoluteTime: string): {valid: boolean, date?: moment.Moment} {
@@ -541,12 +541,12 @@ async function buildAbsoluteTimeReminder(message: discord.Message, args: string[
         return;
     }
 
-    if (dateUtc - nowUtc < 60) {
+    if (dateUtc - nowUtc < 60 * 1000) {
         utils.send(message, `1 minute into the future is the earliest you can set a reminder to!`);
         return;
     }
 
-    if (dateUtc - nowUtc > 31104000) {
+    if (dateUtc - nowUtc > 365 * 24 * 60 * 60 * 1000) {
         utils.send(message, `1 year into the future is the latest you can set a reminder to!`);
         return;
     }
@@ -561,7 +561,7 @@ async function buildAbsoluteTimeReminder(message: discord.Message, args: string[
 
     await setReminder(reminder);
 
-    utils.send(message, "Your reminder has been set!");
+    utils.send(message, `Your reminder has been set for ${parsedDate.date.format("dddd, MMMM Do YYYY, HH:mm")}!`);
 }
 
 function enumerateMissingTitleRoles(roles: string[]): string {
