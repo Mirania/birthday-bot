@@ -1,20 +1,20 @@
 {
   "name": "birthdaybot",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "a discord bot",
   "main": "index.js",
   "scripts": {
-    "start": "node built/index.js",
+    "start": "tsc && node built/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@types/dotenv": "^8.2.0",
-    "@types/node": "^12.19.3",
-    "discord.js": "^12.4.1",
+    "@types/node": "^12.20.55",
+    "discord.js": "^14.8.0",
     "dotenv": "^6.2.0",
     "firebase-admin": "^8.13.0",
-    "moment-timezone": "^0.5.31"
+    "moment-timezone": "^0.5.42"
   }
 }

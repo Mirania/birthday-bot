@@ -74,3 +74,5 @@ typings/
 
 # git
 .git/
+
+/built/

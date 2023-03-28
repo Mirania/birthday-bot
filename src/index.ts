@@ -1,41 +1,47 @@
 import * as dotenv from 'dotenv'; dotenv.config();
-import * as discord from 'discord.js';
-import * as handler from './handler';
-import * as data from './data';
-import * as utils from './utils';
+import { Client, Events, GatewayIntentBits, Interaction } from 'discord.js';
+import commands from './slash/collection';
 
-const bot = new discord.Client({
-    partials: ["REACTION", "MESSAGE", "CHANNEL"],
-    ws: { intents: ["GUILDS", "GUILD_MESSAGES", "GUILD_MEMBERS", "DIRECT_MESSAGES"] }
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
+
+client.once(Events.ClientReady, c => {
+	console.log(`Ready! Logged in as ${c.user.tag}`);
 });
-const botId = process.env.BOT_ID;
-const prefix = process.env.COMMAND;
 
-let isReady = false;
-data.gatherImages();
-bot.login(process.env.BOT_TOKEN);
+client.login(process.env.BOT_TOKEN);
 
-bot.on("ready", async () => {
-    bot.user.setPresence({ activity: { name: "Birthday Bot - $help" }, status: "dnd" });
-    await data.init();
-    handler.handleEvents();
-    isReady = true;
-    utils.log("Bot is online.");
-})
+client.on(Events.InteractionCreate, async interaction => {
+    if (!interaction.isChatInputCommand() && !interaction.isAutocomplete()) {
+        return;
+    }
 
-bot.on("message", (message) => {
-    if (!isReady || message.author.id === botId) return;
+    const command = commands.get(interaction.commandName);
 
-    const isDM = message.channel instanceof discord.DMChannel;
-    const isCommand = message.content.startsWith(prefix);
+    if (!command) {
+        console.error(`No command matching ${interaction.commandName} was found.`);
+        return;
+    }
 
-    if (isCommand) { // handles commands even inside DMs
-        handler.handleCommand(message);
-    } else if (isDM) {
-        handler.handleDM(message);
+    if (interaction.isChatInputCommand() && command.execute) {
+        try {
+            await command.execute(interaction);
+        } catch (error) {
+            console.error(error);
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+            } else {
+                await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+            }
+        }
+    } else if (interaction.isAutocomplete() && command.autocomplete) {
+        try {
+            await command.autocomplete(interaction);
+        } catch (error) {
+            console.error(error);
+        }
     }
 });
 
-export function self(): discord.Client {
-    return bot;
+export function self(): Client {
+    return client;
 }
