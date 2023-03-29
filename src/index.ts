@@ -1,17 +1,28 @@
 import * as dotenv from 'dotenv'; dotenv.config();
-import { Client, Events, GatewayIntentBits, Interaction } from 'discord.js';
+import { Client, Events, GatewayIntentBits } from 'discord.js';
+import * as database from './database';
 import commands from './slash/collection';
+
+let isReady = false;
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
 
-client.once(Events.ClientReady, c => {
-	console.log(`Ready! Logged in as ${c.user.tag}`);
-});
+Promise.all([
+    client.login(process.env.BOT_TOKEN),
+    database.init()
+]).then(() => isReady = true);
 
-client.login(process.env.BOT_TOKEN);
+client.once(Events.ClientReady, c => {
+    console.log(`Ready! Logged in as ${c.user.tag}`);
+});
 
 client.on(Events.InteractionCreate, async interaction => {
     if (!interaction.isChatInputCommand() && !interaction.isAutocomplete()) {
+        return;
+    }
+
+    if (!isReady) {
+        console.error("Ignored command because bot is not ready yet.");
         return;
     }
 

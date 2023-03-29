@@ -14,9 +14,19 @@ export function getCurrentYear() {
 }
 
 export function getNextBirthday(day: number, month: number, timezone: string) {
+    const now = moment();
+    const currentDay = now.date(), currentMonth = now.month() + 1, currentYear = now.year();
+
+    let nextBirthdayYear: number;
+    if (month < currentMonth || (month === currentMonth && day < currentDay)) {
+        nextBirthdayYear = currentYear + 1;
+    } else {
+        nextBirthdayYear = currentYear;
+    }
+
     const dayString = day < 10 ? `0${day}` : day.toString();
     const monthString = month < 10 ? `0${month}` : month.toString();
-    return moment.tz(`${getCurrentYear() + 1}-${monthString}-${dayString}T00:00:00.000`, timezone);
+    return moment.tz(`${nextBirthdayYear}-${monthString}-${dayString}T00:00:00.000`, timezone);
 }
 
 export function getReadableDateString(date: moment.Moment) {

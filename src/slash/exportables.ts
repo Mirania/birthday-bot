@@ -1,32 +1,80 @@
-import { ActionRowBuilder, AutocompleteInteraction, ButtonBuilder, ButtonStyle, ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
+import { ActionRowBuilder, AutocompleteInteraction, ButtonBuilder, ButtonStyle, ChannelType, ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
 import { getNextBirthday, getReadableDateString, getTimezones } from '../utils/time';
 import { validateDay, validateTimezone } from '../utils/validators';
+import * as database from '../database';
+import { getRandomImageLink, prepareBirthdayMessage, prepareChannelMention } from '../utils/messaging';
 
-export const ping = {
+export const admin = {
     data: new SlashCommandBuilder()
-        .setName('ping')
-        .setDescription('Replies with Pong!')
+        .setName('configure')
+        .setDescription('Configure the birthday announcements.')
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+        .setDMPermission(false)
+        .addChannelOption(option =>
+            option.setName('channel')
+                .setDescription('The channel where the birthday announcements will be posted.')
+                .addChannelTypes(ChannelType.GuildText)
+                .setRequired(true))
+        .addBooleanOption(option =>
+            option.setName('image')
+                .setDescription('Post a festive image alongside the birthday announcements?')
+                .setRequired(true))
         .addStringOption(option =>
-            option.setName('input')
-                .setDescription('The input to echo back')),
+            option.setName('message')
+                .setDescription('The message to post. Any occurrences of <user> will be replaced with a mention of the actual user.')
+                .setRequired(true)
+                .setMaxLength(500)),
     async execute(interaction: ChatInputCommandInteraction) {
-        await interaction.reply('Pong!');
-    },
-};
+        const channelId = interaction.options.get("channel").value as string;
+        const image = interaction.options.get("image").value as boolean;
+        const message = interaction.options.get("message").value as string;
+
+        const okButtonId = "configure_ok";
+        const failButtonId = "configure_fail";
+        const buttons = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId(okButtonId)
+                    .setLabel("This is correct")
+                    .setStyle(ButtonStyle.Success),
+            ).addComponents(
+                new ButtonBuilder()
+                    .setCustomId(failButtonId)
+                    .setLabel("This is incorrect")
+                    .setStyle(ButtonStyle.Danger),
+            );
+
+        const callback = interaction.channel.createMessageComponentCollector({
+            filter: i => i.isButton() && (i.customId === okButtonId || i.customId === failButtonId) && i.user.id === interaction.user.id,
+            time: 10000,
+            max: 1
+        });
+        callback.on('collect', async i => {
+            if (i.customId === okButtonId) {
+                await database.configure(i.guildId, {
+                    channelId,
+                    image,
+                    message
+                });
+                await i.update({ content: "Birthday announcements are now configured!", files: [], components: [] });
+            } else {
+                await i.update({ content: "Okay, please try to configure me again.", files: [], components: [] });
+            }
+        });
+
+        await interaction.reply({
+            content: `I'll be posting a message like this in the ${prepareChannelMention(channelId)} channel:\n\n${prepareBirthdayMessage(message, interaction.user.id)}`,
+            files: image ? [{ attachment: getRandomImageLink() }] : [],
+            components: [buttons as any]
+        });
+    }
+}
 
 export const register = {
     data: new SlashCommandBuilder()
         .setName('register')
         .setDescription('Register your birthday so I can announce it!')
-        .addStringOption(option =>
-            option.setName('gender')
-                .setDescription('What is your gender?')
-                .setRequired(true)
-                .addChoices(
-                    { name: 'Male', value: 'male' },
-                    { name: 'Female', value: 'female' },
-                    { name: 'Other', value: 'other' }
-                ))
+        .setDMPermission(false)
         .addIntegerOption(option => 
             option.setName('month')
                 .setDescription('What is your month of birth?')
@@ -58,7 +106,11 @@ export const register = {
                 .setAutocomplete(true)
                 .setMaxLength(100)),
     async execute(interaction: ChatInputCommandInteraction) {
-        const gender = interaction.options.get("gender").value as string;
+        if (database.userExists(interaction.guildId, interaction.user.id)) {
+            await interaction.reply("You've already registed yourself in this server.");
+            return; 
+        }
+
         const month = interaction.options.get("month").value as number;
         const day = interaction.options.get("day").value as number;
         const tz = interaction.options.get("timezone").value as string;
@@ -90,21 +142,29 @@ export const register = {
                     .setStyle(ButtonStyle.Danger),
             );
 
+        const isFeb29 = day === 29 && month === 2;
+        const bday = getNextBirthday(isFeb29 ? 28 : day, month, tz);
+
         const callback = interaction.channel.createMessageComponentCollector({
             filter: i => i.isButton() && (i.customId === okButtonId || i.customId === failButtonId) && i.user.id === interaction.user.id,
-            time: 15000,
+            time: 10000,
             max: 1
         });
         callback.on('collect', async i => {
             if (i.customId === okButtonId) {
+                await database.register(i.guildId, {
+                    userId: i.user.id,
+                    month,
+                    day,
+                    tz,
+                    nextBirthday: bday.valueOf()
+                });
                 await i.update({ content: "You're now registered!", components: [] });
             } else {
                 await i.update({ content: "Okay, please try to register again.", components: [] });
-            }     
+            }
         });
 
-        const isFeb29 = day === 29 && month === 2;
-        const bday = getNextBirthday(isFeb29 ? 28 : day, month, tz);
         await interaction.reply({
             content: `Okay. This means your next birthday is on **${getReadableDateString(bday)}**. Is that correct?` +
                      (isFeb29 ? `\n**Note:** I know you picked February 29. I'll consider it February 28 to save myself from some serious headaches 😅` : ""),
@@ -115,5 +175,15 @@ export const register = {
         const focusedValue = interaction.options.getFocused().toLowerCase();
         const filtered = getTimezones().filter(tz => tz.lowercased.includes(focusedValue));
         await interaction.respond(filtered.length <= 25 ? filtered.map(tz => ({ name: tz.printable, value: tz.value })) : []);
+    }
+}
+
+export const nextbirthday = {
+    data: new SlashCommandBuilder()
+        .setName('nextbirthday')
+        .setDescription('Find out when the next birthday is going to happen!')
+        .setDMPermission(false),
+    async execute(interaction: ChatInputCommandInteraction) {
+        // TODO
     }
 }

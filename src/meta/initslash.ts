@@ -12,7 +12,7 @@ const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
 
         // The put method is used to fully refresh all commands in the guild with the current set
         // Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
-        const data = await rest.put(
+        await rest.put(
             Routes.applicationCommands(process.env.BOT_ID),
             { body: commands.map(cmd => cmd.data.toJSON()) },
         );
