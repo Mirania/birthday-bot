@@ -1,9 +1,9 @@
-import { AutocompleteInteraction, ChatInputCommandInteraction, Collection, SlashCommandBuilder } from 'discord.js';
+import { AutocompleteInteraction, ChatInputCommandInteraction, Client, Collection, SlashCommandBuilder } from 'discord.js';
 import * as commands from './exportables';
 
 const collection = new Collection<string, { 
     data: SlashCommandBuilder, 
-    execute: (interaction: ChatInputCommandInteraction) => Promise<void>,
+    execute: (interaction: ChatInputCommandInteraction, client?: Client) => Promise<void>,
     autocomplete: (interaction: AutocompleteInteraction) => Promise<void>
 }>();
 

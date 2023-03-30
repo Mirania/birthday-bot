@@ -2,6 +2,7 @@ import * as dotenv from 'dotenv'; dotenv.config();
 import { Client, Events, GatewayIntentBits } from 'discord.js';
 import * as database from './database/database';
 import commands from './slash/collection';
+import { announcer } from './announcer';
 
 let isReady = false;
 
@@ -14,6 +15,8 @@ Promise.all([
 
 client.once(Events.ClientReady, c => {
     console.log(`Ready! Logged in as ${c.user.tag}`);
+    announcer.execute(client);
+    setInterval(() => announcer.execute(client), announcer.cooldownMs);
 });
 
 client.on(Events.InteractionCreate, async interaction => {
@@ -35,7 +38,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
     if (interaction.isChatInputCommand() && command.execute) {
         try {
-            await command.execute(interaction);
+            await command.execute(interaction, client);
         } catch (error) {
             console.error(error);
             if (interaction.replied || interaction.deferred) {

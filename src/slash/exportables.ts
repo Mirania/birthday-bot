@@ -1,9 +1,9 @@
-import { ActionRowBuilder, AutocompleteInteraction, ButtonBuilder, ButtonStyle, ChannelType, ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
+import { ActionRowBuilder, AutocompleteInteraction, ButtonBuilder, ButtonStyle, ChannelType, ChatInputCommandInteraction, Client, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
 import { calcNextBirthday, getNextBirthdayFromList, getReadableDateString, getRelativeTimeString, getTimezones } from '../utils/time';
 import { validateDay, validateTimezone } from '../utils/validators';
 import * as database from '../database/database';
 import { getRandomImageLink, prepareBirthdayMessage, prepareChannelMention, prepareUserMention } from '../utils/misc';
-import moment = require('moment-timezone');
+import * as moment from 'moment-timezone';
 
 export const admin = {
     data: new SlashCommandBuilder()
@@ -156,7 +156,7 @@ export const register = {
                 await database.register(i.guildId, {
                     userId: i.user.id,
                     month,
-                    day,
+                    day: isFeb29 ? 28 : day,
                     tz,
                     nextBirthday: bday.valueOf()
                 });
@@ -184,7 +184,7 @@ export const nextbirthday = {
         .setName('nextbirthday')
         .setDescription('Find out when the next birthday is going to happen!')
         .setDMPermission(false),
-    async execute(interaction: ChatInputCommandInteraction) {
+    async execute(interaction: ChatInputCommandInteraction, client: Client) {
         const birthdays = database.getBirthdays(interaction.guildId);
         if (!birthdays) {
             await interaction.reply("There are no configured birthdays.");
@@ -197,8 +197,14 @@ export const nextbirthday = {
             return;
         }
 
+        const guild = client.guilds.cache.get(interaction.guildId);
+        if (guild.members.cache.size <= 1) {
+            await guild.members.fetch({ withPresences: false });
+        }
+
         const date = moment.tz(next.nextBirthday, next.tz);
-        await interaction.reply(`The next birthday is that of ${prepareUserMention(next.userId)}, on **${getReadableDateString(date, false)}**! ` +
+        const username = guild.members.cache.has(next.userId) ? `**${guild.members.cache.get(next.userId).displayName}**` : "someone who has left the server";
+        await interaction.reply(`The next birthday is that of ${username}, on **${getReadableDateString(date, false)}**! ` +
                                 `\`(in ${getRelativeTimeString(moment(), date)})\``);
     }
 }
