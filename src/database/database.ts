@@ -1,4 +1,4 @@
-import * as firebase from './meta/firebase-module';
+import * as firebase from './firebase-module';
 
 export interface Birthday {
     /** discord user id */

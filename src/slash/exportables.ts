@@ -1,8 +1,9 @@
 import { ActionRowBuilder, AutocompleteInteraction, ButtonBuilder, ButtonStyle, ChannelType, ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder } from 'discord.js';
-import { getNextBirthday, getReadableDateString, getTimezones } from '../utils/time';
+import { calcNextBirthday, getNextBirthdayFromList, getReadableDateString, getRelativeTimeString, getTimezones } from '../utils/time';
 import { validateDay, validateTimezone } from '../utils/validators';
-import * as database from '../database';
-import { getRandomImageLink, prepareBirthdayMessage, prepareChannelMention } from '../utils/messaging';
+import * as database from '../database/database';
+import { getRandomImageLink, prepareBirthdayMessage, prepareChannelMention, prepareUserMention } from '../utils/misc';
+import moment = require('moment-timezone');
 
 export const admin = {
     data: new SlashCommandBuilder()
@@ -143,7 +144,7 @@ export const register = {
             );
 
         const isFeb29 = day === 29 && month === 2;
-        const bday = getNextBirthday(isFeb29 ? 28 : day, month, tz);
+        const bday = calcNextBirthday(isFeb29 ? 28 : day, month, tz);
 
         const callback = interaction.channel.createMessageComponentCollector({
             filter: i => i.isButton() && (i.customId === okButtonId || i.customId === failButtonId) && i.user.id === interaction.user.id,
@@ -166,7 +167,7 @@ export const register = {
         });
 
         await interaction.reply({
-            content: `Okay. This means your next birthday is on **${getReadableDateString(bday)}**. Is that correct?` +
+            content: `Okay. This means your next birthday is on **${getReadableDateString(bday, true)}**. Is that correct?` +
                      (isFeb29 ? `\n**Note:** I know you picked February 29. I'll consider it February 28 to save myself from some serious headaches 😅` : ""),
             components: [buttons as any]
         });
@@ -184,6 +185,20 @@ export const nextbirthday = {
         .setDescription('Find out when the next birthday is going to happen!')
         .setDMPermission(false),
     async execute(interaction: ChatInputCommandInteraction) {
-        // TODO
+        const birthdays = database.getBirthdays(interaction.guildId);
+        if (!birthdays) {
+            await interaction.reply("There are no configured birthdays.");
+            return;
+        }
+
+        const next = getNextBirthdayFromList(Object.values(birthdays));
+        if (!next) {
+            await interaction.reply("There are no configured birthdays.");
+            return;
+        }
+
+        const date = moment.tz(next.nextBirthday, next.tz);
+        await interaction.reply(`The next birthday is that of ${prepareUserMention(next.userId)}, on **${getReadableDateString(date, false)}**! ` +
+                                `\`(in ${getRelativeTimeString(moment(), date)})\``);
     }
 }
