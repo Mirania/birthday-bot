@@ -19,7 +19,7 @@ export function calcNextBirthday(day: number, month: number, timezone: string) {
     const currentDay = now.date(), currentMonth = now.month() + 1, currentYear = now.year();
 
     let nextBirthdayYear: number;
-    if (month < currentMonth || (month === currentMonth && day < currentDay)) {
+    if (month < currentMonth || (month === currentMonth && day <= currentDay)) {
         nextBirthdayYear = currentYear + 1;
     } else {
         nextBirthdayYear = currentYear;
