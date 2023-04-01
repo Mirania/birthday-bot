@@ -108,7 +108,10 @@ export const register = {
                 .setMaxLength(100)),
     async execute(interaction: ChatInputCommandInteraction) {
         if (database.userExists(interaction.guildId, interaction.user.id)) {
-            await interaction.reply("You've already registed yourself in this server.");
+            await interaction.reply({
+                content: "You've already registed yourself in this server.",
+                ephemeral: true
+            });
             return; 
         }
 
@@ -118,13 +121,19 @@ export const register = {
 
         const dayValidation = validateDay(month, day);
         if (!dayValidation.isValid) {
-            await interaction.reply(`The month you chose has less than ${dayValidation.badInput} days. Please try again.`);
+            await interaction.reply({
+                content: `The month you chose has less than ${dayValidation.badInput} days. Please try again.`,
+                ephemeral: true
+            });
             return;
         }
 
         const tzValidation = validateTimezone(tz);
         if (!tzValidation.isValid) {
-            await interaction.reply(`I don't recognise the timezone '${tzValidation.badInput}'. Please pick one from the list of options.`);
+            await interaction.reply({
+                content: `I don't recognise the timezone '${tzValidation.badInput}'. Please pick one from the list of options.`,
+                ephemeral: true
+            });
             return;
         }
 
@@ -148,7 +157,7 @@ export const register = {
 
         const callback = interaction.channel.createMessageComponentCollector({
             filter: i => i.isButton() && (i.customId === okButtonId || i.customId === failButtonId) && i.user.id === interaction.user.id,
-            time: 10000,
+            time: 60000,
             max: 1
         });
         callback.on('collect', async i => {
@@ -169,7 +178,8 @@ export const register = {
         await interaction.reply({
             content: `Okay. This means your next birthday is on **${getReadableDateString(bday, true)}**. Is that correct?` +
                      (isFeb29 ? `\n**Note:** I know you picked February 29. I'll consider it February 28 to save myself from some serious headaches 😅` : ""),
-            components: [buttons as any]
+            components: [buttons as any],
+            ephemeral: true
         });
     },
     async autocomplete(interaction: AutocompleteInteraction) {
@@ -201,6 +211,7 @@ export const nextbirthday = {
         if (guild.members.cache.size <= 1) {
             await guild.members.fetch({ withPresences: false });
         }
+        console.log(`Guild id ${interaction.guildId} has ${guild.members.cache.size} members.`);
 
         const date = moment.tz(next.nextBirthday, next.tz);
         const username = guild.members.cache.has(next.userId) ? `**${guild.members.cache.get(next.userId).displayName}**` : "someone who has left the server";
