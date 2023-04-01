@@ -29,7 +29,7 @@ export const announcer = {
             }
 
             const guild = client.guilds.cache.get(guildId);
-            if (guild.members.cache.size <= 1) {
+            if (guild.members.cache.size <= 2) {
                 await guild.members.fetch({withPresences: false});
             } 
             console.log(`Guild id ${guildId} has ${guild.members.cache.size} members.`);

@@ -208,7 +208,7 @@ export const nextbirthday = {
         }
 
         const guild = client.guilds.cache.get(interaction.guildId);
-        if (guild.members.cache.size <= 1) {
+        if (guild.members.cache.size <= 2) {
             await guild.members.fetch({ withPresences: false });
         }
         console.log(`Guild id ${interaction.guildId} has ${guild.members.cache.size} members.`);
