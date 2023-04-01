@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv'; dotenv.config();
 import { Client, Events, GatewayIntentBits } from 'discord.js';
 import * as database from './database/database';
 import commands from './slash/collection';
-import { announcer } from './announcer';
+import { announcer, fetcher } from './announcer';
 
 let isReady = false;
 
@@ -18,6 +18,8 @@ client.once(Events.ClientReady, c => {
     client.user.setPresence({ activities: [{ name: 'Birthday Bot! /register' }], status: 'dnd' });
     announcer.execute(client);
     setInterval(() => announcer.execute(client), announcer.cooldownMs);
+    fetcher.execute(client);
+    setInterval(() => fetcher.execute(client), fetcher.cooldownMs);
 });
 
 client.on(Events.InteractionCreate, async interaction => {

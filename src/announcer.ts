@@ -51,7 +51,28 @@ export const announcer = {
                     console.log(`User id ${bday.userId} will have their next birthday updated to ${getReadableDateString(nextBirthday, true)}.`);
                     await updateNextBirthday(guildId, bday.userId, nextBirthday.valueOf());
                 }
-            };
-        };
+            }
+        }
+    }
+}
+
+export const fetcher = {
+    cooldownMs: 2 * 60 * 60 * 1000,
+    async execute(client: Client) {
+        const guildIds = getConfiguredServers();
+        console.log(`Refreshing user lists for ${guildIds.length} guilds.`);
+
+        const promises = guildIds.map(guildId => {
+            const promise = client.guilds.cache.get(guildId)?.members.fetch({withPresences: false});
+            if (promise) {
+                console.log(`Will refresh guild id ${guildId}.`);
+                return promise;
+            } else {
+                console.log(`Could not find guild id ${guildId} in the guilds cache.`);
+                return Promise.resolve();
+            }
+        });
+
+        await Promise.all(promises);
     }
 }
