@@ -66,7 +66,8 @@ export const admin = {
         await interaction.reply({
             content: `I'll be posting a message like this in the ${prepareChannelMention(channelId)} channel:\n\n${prepareBirthdayMessage(message, interaction.user.id)}`,
             files: image ? [{ attachment: getRandomImageLink() }] : [],
-            components: [buttons as any]
+            components: [buttons as any],
+            ephemeral: true
         });
     }
 }
@@ -185,7 +186,7 @@ export const register = {
     async autocomplete(interaction: AutocompleteInteraction) {
         const focusedValue = interaction.options.getFocused().toLowerCase();
         const filtered = getTimezones().filter(tz => tz.lowercased.includes(focusedValue));
-        await interaction.respond(filtered.length <= 25 ? filtered.map(tz => ({ name: tz.printable, value: tz.value })) : []);
+        await interaction.respond(filtered.map(tz => ({ name: tz.printable, value: tz.value })).slice(0, 25)); // discord limitation: 25 options is max
     }
 }
 
