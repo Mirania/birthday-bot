@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import moment = require("moment");
 
 const images = fs.readdirSync("assets/").filter(file => !file.endsWith(".db"));
 
@@ -16,6 +17,27 @@ export function prepareUserMention(userId: string) {
 
 export function prepareChannelMention(channelId: string) {
     return `<#${channelId}>`;
+}
+
+/**
+ * Prints a message to the console.
+ */
+export function log(text: string): void {
+    console.log(`[${moment().tz(userTz()).format("DD-MM-YYYY HH:mm:ss")}] ${text}`);
+}
+
+/**
+ * Prints a message to the console.
+ */
+export function logError(text: string): void {
+    console.log(`[${moment().tz(userTz()).format("DD-MM-YYYY HH:mm:ss")}] <Error> ${text}`);
+}
+
+/**
+ * Gets the user's timezone.
+ */
+export function userTz(): string {
+    return process.env.OWNER_TIMEZONE.replace(/ /g, "_");
 }
 
 /**

@@ -1,4 +1,5 @@
 import * as firebase from './firebase-module';
+import { log } from "../utils/misc";
 
 export interface Birthday {
     /** discord user id */
@@ -39,7 +40,7 @@ export async function configure(guildId: string, announcement: Announcement) {
     announcements[guildId] = announcement;
     await firebase.post(`birthdays/servers/${guildId}/announcement`, announcement);
 
-    console.log(`Configured the announcements for guild id ${guildId}.`);
+    log(`Configured the announcements for guild id ${guildId}.`);
 }
 
 export async function register(guildId: string, birthday: Birthday) {
@@ -47,24 +48,24 @@ export async function register(guildId: string, birthday: Birthday) {
     birthdays[guildId][birthday.userId] = birthday;
     await firebase.post(`birthdays/servers/${guildId}/users/${birthday.userId}`, birthday);
 
-    console.log(`Registered user id ${birthday.userId} in guild id ${guildId}.`);
+    log(`Registered user id ${birthday.userId} in guild id ${guildId}.`);
 }
 
 export async function updateNextBirthday(guildId: string, userId: string, timestamp: number) {
     if (!birthdays[guildId] || !birthdays[guildId][userId]) {
-        console.log(`User id ${userId} is not registered, cannot update.`);
+        log(`User id ${userId} is not registered, cannot update.`);
         return;
     }
 
     if (birthdays[guildId][userId].nextBirthday >= timestamp) {
-        console.log(`User id ${userId} already has this timestamp, no point in updating.`);
+        log(`User id ${userId} already has this timestamp, no point in updating.`);
         return;
     }
 
     birthdays[guildId][userId].nextBirthday = timestamp;
     await firebase.update(`birthdays/servers/${guildId}/users/${userId}`, { nextBirthday: timestamp });
 
-    console.log(`Updated timestamp for user id ${userId}.`);
+    log(`Updated timestamp for user id ${userId}.`);
 }
 
 export function getConfiguredServers() {

@@ -4,6 +4,7 @@
   "description": "a discord bot",
   "main": "index.js",
   "scripts": {
+    "main": "node built/index.js",
     "start": "tsc && node built/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

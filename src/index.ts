@@ -3,6 +3,7 @@ import { Client, Events, GatewayIntentBits } from 'discord.js';
 import * as database from './database/database';
 import commands from './slash/collection';
 import { announcer, fetcher } from './announcer';
+import { log, logError } from "./utils/misc";
 
 let isReady = false;
 
@@ -14,7 +15,7 @@ Promise.all([
 ]).then(() => isReady = true);
 
 client.once(Events.ClientReady, c => {
-    console.log(`Ready! Logged in as ${c.user.tag}`);
+    log(`Ready! Logged in as ${c.user.tag}`);
     client.user.setPresence({ activities: [{ name: 'Birthday Bot! /register' }], status: 'dnd' });
     announcer.execute(client);
     setInterval(() => announcer.execute(client), announcer.cooldownMs);
@@ -28,14 +29,14 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     if (!isReady) {
-        console.error("Ignored command because bot is not ready yet.");
+        logError("Ignored command because bot is not ready yet.");
         return;
     }
 
     const command = commands.get(interaction.commandName);
 
     if (!command) {
-        console.error(`No command matching ${interaction.commandName} was found.`);
+        logError(`No command matching ${interaction.commandName} was found.`);
         return;
     }
 
@@ -43,7 +44,7 @@ client.on(Events.InteractionCreate, async interaction => {
         try {
             await command.execute(interaction, client);
         } catch (error) {
-            console.error(error);
+            logError(error);
             if (interaction.replied || interaction.deferred) {
                 await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
             } else {
@@ -54,7 +55,7 @@ client.on(Events.InteractionCreate, async interaction => {
         try {
             await command.autocomplete(interaction);
         } catch (error) {
-            console.error(error);
+            logError(error);
         }
     }
 });

@@ -4,6 +4,7 @@ import { validateDay, validateTimezone } from '../utils/validators';
 import * as database from '../database/database';
 import { getRandomImageLink, prepareBirthdayMessage, prepareChannelMention, prepareUserMention } from '../utils/misc';
 import * as moment from 'moment-timezone';
+import { log } from "../utils/misc";
 
 export const admin = {
     data: new SlashCommandBuilder()
@@ -212,7 +213,7 @@ export const nextbirthday = {
         if (guild.members.cache.size <= 2) {
             await guild.members.fetch({ withPresences: false });
         }
-        console.log(`Guild id ${interaction.guildId} has ${guild.members.cache.size} members.`);
+        log(`Guild id ${interaction.guildId} has ${guild.members.cache.size} members.`);
 
         const date = moment.tz(next.nextBirthday, next.tz);
         const username = guild.members.cache.has(next.userId) ? `**${guild.members.cache.get(next.userId).displayName}**` : "someone who has left the server";
