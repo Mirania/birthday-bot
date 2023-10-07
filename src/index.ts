@@ -1,4 +1,4 @@
-import * as dotenv from 'dotenv'; dotenv.config();
+import * as dotenv from 'dotenv'; dotenv.config({ path: 'env.txt' });
 import { Client, Events, GatewayIntentBits } from 'discord.js';
 import * as database from './database/database';
 import commands from './slash/collection';
