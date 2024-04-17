@@ -76,3 +76,4 @@ typings/
 .git/
 
 /built/
+env.txt

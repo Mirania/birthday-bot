@@ -1,4 +1,4 @@
-import * as dotenv from 'dotenv'; dotenv.config();
+import * as dotenv from 'dotenv'; dotenv.config({ path: 'env.txt' });
 import { REST, Routes } from 'discord.js';
 import commands from '../slash/collection';
 

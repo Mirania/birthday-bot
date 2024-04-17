@@ -1,4 +1,4 @@
-import * as dotenv from 'dotenv'; dotenv.config();
+import * as dotenv from 'dotenv'; dotenv.config({ path: 'env.txt' });
 import * as firebase from '../database/firebase-module';
 import { calcNextBirthday, getReadableDateString } from '../utils/time';
 

@@ -1,5 +1,5 @@
 import { Client, Events, GatewayIntentBits } from 'discord.js';
-import * as dotenv from 'dotenv'; dotenv.config();
+import * as dotenv from 'dotenv'; dotenv.config({ path: 'env.txt' });
 import * as firebase from '../database/firebase-module';
 import { getReadableDateString, getRelativeTimeString } from '../utils/time';
 import * as moment from 'moment-timezone';
