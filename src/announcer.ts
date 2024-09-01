@@ -40,6 +40,12 @@ export const announcer = {
                     if (bday.nextBirthday <= nowTimestamp) {
                         log(`User id ${bday.userId} has a birthday now, will announce it.`);
 
+                        try {
+                            await guild.members.fetch(bday.userId);
+                        } catch (e) {
+                            log(`Failed to pull member ${bday.userId} into cache!?`);
+                        }
+
                         if (guild.members.cache.has(bday.userId)) {
                             await channel.send({
                                 content: prepareBirthdayMessage(announcement.message, bday.userId),
