@@ -43,7 +43,8 @@ export const announcer = {
                         try {
                             await guild.members.fetch(bday.userId);
                         } catch (e) {
-                            log(`Failed to pull member ${bday.userId} into cache!?`);
+                            log(`Failed to pull member ${bday.userId} into cache!?: ${e}`); 
+                            throw e;
                         }
 
                         if (guild.members.cache.has(bday.userId)) {
@@ -62,8 +63,8 @@ export const announcer = {
                 }
             }
         } catch (e) {
-            logError("Failed to check and/or announce birthdays.");
-            console.log(e);
+            logError(`Failed to check and/or announce birthdays. ${e}`);
+            throw e;
         }
     }
 }
@@ -88,8 +89,8 @@ export const fetcher = {
 
             await Promise.all(promises);
         } catch (e) {
-            logError("Failed to refresh guilds.");
-            console.log(e);
+            logError(`Failed to refresh guilds. ${e}`);
+            throw e;
         }
     }
 }

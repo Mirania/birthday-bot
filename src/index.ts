@@ -5,6 +5,11 @@ import commands from './slash/collection';
 import { announcer, fetcher } from './announcer';
 import { log, logError } from "./utils/misc";
 
+if (process.argv[2] !== "fromSh") {
+    console.log("Make sure to run this bot using 'bash runner.sh' instead.");
+    process.exit(123);
+}
+
 let isReady = false;
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
