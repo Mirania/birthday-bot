@@ -19,13 +19,13 @@ Promise.all([
     database.init()
 ]).then(() => isReady = true);
 
-client.once(Events.ClientReady, c => {
+client.once(Events.ClientReady, async c => {
     log(`Ready! Logged in as ${c.user.tag}`);
     client.user.setPresence({ activities: [{ name: 'Birthday Bot! /register' }], status: 'dnd' });
-    announcer.execute(client);
-    setInterval(() => announcer.execute(client), announcer.cooldownMs);
-    fetcher.execute(client);
+    await fetcher.execute(client);
     setInterval(() => fetcher.execute(client), fetcher.cooldownMs);
+    await announcer.execute(client);
+    setInterval(() => announcer.execute(client), announcer.cooldownMs);
 });
 
 client.on(Events.InteractionCreate, async interaction => {
