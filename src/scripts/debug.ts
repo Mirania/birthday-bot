@@ -3,45 +3,48 @@ import * as dotenv from 'dotenv'; dotenv.config({ path: 'env.txt' });
 import * as firebase from '../database/firebase-module';
 import { getReadableDateString, getRelativeTimeString } from '../utils/time';
 import * as moment from 'moment-timezone';
+import * as database from '../database/database';
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
+main();
 
-Promise.all([
-    client.login(process.env.BOT_TOKEN),
-    firebase.connect(process.env.FIREBASE_CREDENTIALS, process.env.FIREBASE_URL)
-]);
+async function main() {
+    const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
 
-client.once(Events.ClientReady, async c => {
-    console.log(`Ready!`);
+    await database.init();
+    await client.login(database.getSecrets().BOT_TOKEN);
 
-    const now = moment();
-    const guilds: object = await firebase.get("birthdays/servers");
-    for (const guildId in guilds) {
-        const guild = c.guilds.cache.get(guildId);
-        await guild.members.fetch({withPresences: false});
+    client.once(Events.ClientReady, async c => {
+        console.log(`Ready!`);
 
-        const configured = await firebase.get(`birthdays/servers/${guildId}/announcement`);
-        console.log("Guild", guildId, `(${guild.name}),`, "configured:", configured != null);
+        const now = moment();
+        const guilds: object = await firebase.get("birthdays/servers");
+        for (const guildId in guilds) {
+            const guild = c.guilds.cache.get(guildId);
+            await guild.members.fetch({ withPresences: false });
 
-        const users = await firebase.get(`birthdays/servers/${guildId}/users`);
-        if (!users) {
-            console.log("No users.");
-        } else {
-            const sorted = Object.keys(users).map(userId => ({userId, tz: users[userId].tz, nextBirthday: users[userId].nextBirthday}))
-                    .sort((a,b) => a.nextBirthday - b.nextBirthday);
+            const configured = await firebase.get(`birthdays/servers/${guildId}/announcement`);
+            console.log("Guild", guildId, `(${guild.name}),`, "configured:", configured != null);
 
-            console.table(sorted.map(entry => {
-                const username = guild.members.cache.has(entry.userId) ? guild.members.cache.get(entry.userId).displayName : "<not in the server>";
-                const date = moment.tz(entry.nextBirthday, entry.tz);
-                return {
-                    "user id": entry.userId,
-                    "user name": username,
-                    "next birthday": getReadableDateString(date, true),
-                    "happens in": getRelativeTimeString(now, date)
-                };
-            }));
+            const users = await firebase.get(`birthdays/servers/${guildId}/users`);
+            if (!users) {
+                console.log("No users.");
+            } else {
+                const sorted = Object.keys(users).map(userId => ({ userId, tz: users[userId].tz, nextBirthday: users[userId].nextBirthday }))
+                    .sort((a, b) => a.nextBirthday - b.nextBirthday);
+
+                console.table(sorted.map(entry => {
+                    const username = guild.members.cache.has(entry.userId) ? guild.members.cache.get(entry.userId).displayName : "<not in the server>";
+                    const date = moment.tz(entry.nextBirthday, entry.tz);
+                    return {
+                        "user id": entry.userId,
+                        "user name": username,
+                        "next birthday": getReadableDateString(date, true),
+                        "happens in": getRelativeTimeString(now, date)
+                    };
+                }));
+            }
         }
-    }
 
-    process.exit(0);
-});
+        process.exit(0);
+    });
+}

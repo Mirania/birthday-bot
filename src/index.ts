@@ -14,56 +14,59 @@ let isReady = false;
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers] });
 
-Promise.all([
-    client.login(process.env.BOT_TOKEN),
-    database.init()
-]).then(() => isReady = true);
+main();
 
-client.once(Events.ClientReady, async c => {
-    log(`Ready! Logged in as ${c.user.tag}`);
-    client.user.setPresence({ activities: [{ name: 'Birthday Bot! /register' }], status: 'dnd' });
-    await fetcher.execute(client);
-    setInterval(() => fetcher.execute(client), fetcher.cooldownMs);
-    await announcer.execute(client);
-    setInterval(() => announcer.execute(client), announcer.cooldownMs);
-});
+async function main() {
+    await database.init();
+    await client.login(database.getSecrets().BOT_TOKEN);
+    isReady = true;
 
-client.on(Events.InteractionCreate, async interaction => {
-    if (!interaction.isChatInputCommand() && !interaction.isAutocomplete()) {
-        return;
-    }
+    client.once(Events.ClientReady, async c => {
+        log(`Ready! Logged in as ${c.user.tag}`);
+        client.user.setPresence({ activities: [{ name: 'Birthday Bot! /register' }], status: 'dnd' });
+        await fetcher.execute(client);
+        setInterval(() => fetcher.execute(client), fetcher.cooldownMs);
+        await announcer.execute(client);
+        setInterval(() => announcer.execute(client), announcer.cooldownMs);
+    });
 
-    if (!isReady) {
-        logError("Ignored command because bot is not ready yet.");
-        return;
-    }
+    client.on(Events.InteractionCreate, async interaction => {
+        if (!interaction.isChatInputCommand() && !interaction.isAutocomplete()) {
+            return;
+        }
 
-    const command = commands.get(interaction.commandName);
+        if (!isReady) {
+            logError("Ignored command because bot is not ready yet.");
+            return;
+        }
 
-    if (!command) {
-        logError(`No command matching ${interaction.commandName} was found.`);
-        return;
-    }
+        const command = commands.get(interaction.commandName);
 
-    if (interaction.isChatInputCommand() && command.execute) {
-        try {
-            await command.execute(interaction, client);
-        } catch (error) {
-            logError(error);
-            if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
-            } else {
-                await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+        if (!command) {
+            logError(`No command matching ${interaction.commandName} was found.`);
+            return;
+        }
+
+        if (interaction.isChatInputCommand() && command.execute) {
+            try {
+                await command.execute(interaction, client);
+            } catch (error) {
+                logError(error);
+                if (interaction.replied || interaction.deferred) {
+                    await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+                } else {
+                    await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+                }
+            }
+        } else if (interaction.isAutocomplete() && command.autocomplete) {
+            try {
+                await command.autocomplete(interaction);
+            } catch (error) {
+                logError(error);
             }
         }
-    } else if (interaction.isAutocomplete() && command.autocomplete) {
-        try {
-            await command.autocomplete(interaction);
-        } catch (error) {
-            logError(error);
-        }
-    }
-});
+    });
+}
 
 export function self(): Client {
     return client;

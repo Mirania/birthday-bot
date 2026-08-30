@@ -1,4 +1,5 @@
 import * as firebase from './firebase-module';
+import * as rot from '../utils/rotcrypt';
 import { log } from "../utils/misc";
 
 export interface Birthday {
@@ -23,11 +24,27 @@ export interface Announcement {
     image: boolean
 }
 
+export type Secrets = {
+    readonly BOT_ID: string;
+    readonly BOT_TOKEN: string;
+    readonly BOT_PERMS: string;
+    readonly OWNER_TIMEZONE: string;
+};
+
 const announcements: Record<string, Announcement> = {};
 const birthdays: Record<string, Record<string, Birthday>> = {};
+let secrets: Secrets;
 
 export async function init() {
     firebase.connect(process.env.FIREBASE_CREDENTIALS, process.env.FIREBASE_URL);
+
+    const rawSecrets: any = await firebase.get("env/birthdaybot");
+    secrets = {
+        BOT_ID: rot.decrypt(rawSecrets.BOT_ID, rawSecrets.ROT),
+        BOT_TOKEN: rot.decrypt(rawSecrets.BOT_TOKEN, rawSecrets.ROT),
+        BOT_PERMS: rawSecrets.BOT_PERMS,
+        OWNER_TIMEZONE: rawSecrets.OWNER_TIMEZONE
+    };
 
     const fetched = await firebase.get("birthdays/servers");
     Object.keys(fetched).forEach(guildId => {
@@ -70,6 +87,10 @@ export async function updateNextBirthday(guildId: string, userId: string, timest
 
 export function getConfiguredServers() {
     return Object.keys(announcements);
+}
+
+export function getSecrets(): Secrets {
+    return secrets;
 }
 
 export function getAnnouncement(guildId: string) {

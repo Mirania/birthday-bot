@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as database from '../database/database';
 import moment = require("moment");
 
 const images = fs.readdirSync("assets/").filter(file => !file.endsWith(".db"));
@@ -37,7 +38,7 @@ export function logError(text: string): void {
  * Gets the user's timezone.
  */
 export function userTz(): string {
-    return process.env.OWNER_TIMEZONE.replace(/ /g, "_");
+    return database.getSecrets().OWNER_TIMEZONE.replace(/ /g, "_");
 }
 
 /**
